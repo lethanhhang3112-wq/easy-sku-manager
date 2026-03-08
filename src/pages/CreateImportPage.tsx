@@ -307,29 +307,23 @@ const CreateImportPage = () => {
                           />
                         </TableCell>
                         <TableCell className="px-2">
-                          <input
-                            type="number"
-                            min={0}
+                          <CurrencyInput
                             value={item.unit_cost}
-                            onChange={(e) => updateField(item.product_id, "unit_cost", parseFloat(e.target.value) || 0)}
+                            onChange={(v) => updateField(item.product_id, "unit_cost", v)}
                             className={cn(inlineInputClass, "text-right w-full")}
                           />
                         </TableCell>
                         <TableCell className="px-2">
-                          <input
-                            type="number"
-                            min={0}
+                          <CurrencyInput
                             value={item.item_discount}
-                            onChange={(e) => updateField(item.product_id, "item_discount", parseFloat(e.target.value) || 0)}
+                            onChange={(v) => updateField(item.product_id, "item_discount", v)}
                             className={cn(inlineInputClass, "text-right w-full")}
                           />
                         </TableCell>
                         <TableCell className="px-2">
-                          <input
-                            type="number"
-                            min={0}
+                          <CurrencyInput
                             value={subtotal}
-                            onChange={(e) => updateSubtotal(item.product_id, parseFloat(e.target.value) || 0)}
+                            onChange={(v) => updateSubtotal(item.product_id, v)}
                             className={cn(inlineInputClass, "text-right w-full font-medium")}
                           />
                         </TableCell>
