@@ -227,7 +227,7 @@ const ImportsPage = () => {
               importOrders.map((o) => (
                 <TableRow key={o.id}>
                   <TableCell className="font-mono">{o.code}</TableCell>
-                  <TableCell>{o.supplier_id ? supplierMap[o.supplier_id]?.name || "—" : "—"}</TableCell>
+                  <TableCell>{o.suppliers?.name || "—"}</TableCell>
                   <TableCell className="text-right">{formatVND(o.total_amount)}</TableCell>
                   <TableCell className="text-muted-foreground">{new Date(o.created_at).toLocaleDateString("vi-VN")}</TableCell>
                   <TableCell>
