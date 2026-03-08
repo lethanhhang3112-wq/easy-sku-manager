@@ -126,7 +126,7 @@ export const ProductSearchDropdown = forwardRef<ProductSearchDropdownRef, Produc
             </div>
           ) : (
             results.map((p) => {
-              const outOfStock = p.stock_quantity <= 0;
+              const outOfStock = onlyInStock && p.stock_quantity <= 0;
               return (
                 <button
                   key={p.id}
