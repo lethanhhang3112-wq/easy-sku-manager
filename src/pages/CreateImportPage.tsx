@@ -426,11 +426,9 @@ const CreateImportPage = () => {
               {/* Giảm giá */}
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">Giảm giá</span>
-                <input
-                  type="number"
-                  min={0}
+                <CurrencyInput
                   value={globalDiscount}
-                  onChange={(e) => setGlobalDiscount(parseFloat(e.target.value) || 0)}
+                  onChange={setGlobalDiscount}
                   className={cn(inlineInputClass, "w-[100px] text-right")}
                 />
               </div>
