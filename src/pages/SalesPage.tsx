@@ -332,6 +332,7 @@ const SalesPage = () => {
         {/* Search */}
         <div className="mb-3">
           <ProductSearchDropdown
+            ref={searchRef}
             onSelect={(p) => addToCart(p.id)}
             excludeIds={[]}
             displayPrice="sale_price"
