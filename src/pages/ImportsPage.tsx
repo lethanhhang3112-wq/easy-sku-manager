@@ -300,10 +300,10 @@ const ImportsPage = () => {
           <TableBody>
             {isLoading ? (
               <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground">Đang tải...</TableCell></TableRow>
-            ) : importOrders.length === 0 ? (
-              <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground">Chưa có phiếu nhập nào</TableCell></TableRow>
+            ) : filteredOrders.length === 0 ? (
+              <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground">Không tìm thấy phiếu nhập nào</TableCell></TableRow>
             ) : (
-              importOrders.map((o) => (
+              filteredOrders.map((o) => (
                 <TableRow key={o.id}>
                   <TableCell className="font-mono">{o.code}</TableCell>
                   <TableCell>{o.suppliers?.name || "—"}</TableCell>
