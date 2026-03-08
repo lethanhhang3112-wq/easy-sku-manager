@@ -122,13 +122,6 @@ const CreateImportPage = () => {
 
   const selectedSupplier = suppliers.find((s) => s.id === supplierId);
 
-  const filteredProducts = useMemo(() => {
-    if (!searchTerm.trim()) return [];
-    const term = searchTerm.toLowerCase();
-    return products
-      .filter((p) => !cart.some((c) => c.product_id === p.id) && (p.name.toLowerCase().includes(term) || p.code.toLowerCase().includes(term)))
-      .slice(0, 10);
-  }, [searchTerm, products, cart]);
 
   const totalQuantity = useMemo(() => cart.reduce((s, c) => s + c.quantity, 0), [cart]);
   const totalAmount = useMemo(() => cart.reduce((s, c) => s + (c.quantity * c.unit_cost - c.item_discount), 0), [cart]);
