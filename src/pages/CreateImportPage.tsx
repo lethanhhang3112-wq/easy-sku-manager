@@ -146,7 +146,6 @@ const CreateImportPage = () => {
       return { ...c, unit_cost: Math.max(0, Math.round(unitCost * 100) / 100) };
     }));
   }, []);
-  }, []);
 
   const removeFromCart = useCallback((pid: string) => {
     setCart((prev) => prev.filter((c) => c.product_id !== pid));
