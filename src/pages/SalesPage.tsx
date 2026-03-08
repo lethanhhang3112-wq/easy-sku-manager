@@ -1,40 +1,50 @@
-import { useState } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
-import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList,
+} from "@/components/ui/command";
+import {
+  Popover, PopoverContent, PopoverTrigger,
+} from "@/components/ui/popover";
 import { toast } from "sonner";
-import { Plus, Trash2, Eye, ShoppingCart, Search } from "lucide-react";
+import { Search, Trash2, Plus, Minus, ChevronsUpDown, Check, ShoppingCart } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { CurrencyInput, formatCurrency } from "@/components/CurrencyInput";
 
-type Customer = { id: string; code: string; name: string };
+// ─── Types ───────────────────────────────────────────────────────
+type Customer = { id: string; code: string; name: string; phone: string | null };
 type Product = { id: string; code: string; name: string; sale_price: number; stock_quantity: number };
-type SalesOrder = {
-  id: string; code: string; customer_id: string | null; total_amount: number; created_at: string;
-};
 type CartItem = {
-  product_id: string; product_name: string; product_code: string;
-  quantity: number; unit_price: number; stock: number;
+  product_id: string;
+  product_code: string;
+  product_name: string;
+  quantity: number;
+  unit_price: number;
+  max_stock: number;
 };
 
-const formatVND = (n: number) =>
-  new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(n);
+const fmt = (n: number) => formatCurrency(n);
 
+const inputClass =
+  "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
+
+// ─── Code generator ──────────────────────────────────────────────
 async function generateSalesCode(): Promise<string> {
   const now = new Date();
   const dd = String(now.getDate()).padStart(2, "0");
   const mm = String(now.getMonth() + 1).padStart(2, "0");
   const yy = String(now.getFullYear()).slice(-2);
-  const prefix = `BH${dd}${mm}${yy}`;
+  const prefix = `HD${dd}${mm}${yy}`;
 
   const { data } = await supabase
     .from("sales_orders")
@@ -44,111 +54,242 @@ async function generateSalesCode(): Promise<string> {
     .limit(1);
 
   if (data && data.length > 0) {
-    const lastSeq = parseInt(data[0].code.slice(8), 10);
+    const lastSeq = parseInt(data[0].code.slice(prefix.length), 10);
     return `${prefix}${String(lastSeq + 1).padStart(3, "0")}`;
   }
   return `${prefix}001`;
 }
 
+// ─── Add Customer Modal ──────────────────────────────────────────
+const AddCustomerModal = ({
+  open, onOpenChange, onSuccess,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  onSuccess: (c: Customer) => void;
+}) => {
+  const queryClient = useQueryClient();
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+
+  const reset = () => { setName(""); setPhone(""); };
+
+  const generateCode = async () => {
+    const { data } = await supabase
+      .from("customers")
+      .select("code")
+      .like("code", "KH%")
+      .order("code", { ascending: false })
+      .limit(1);
+    if (data && data.length > 0) {
+      const num = parseInt(data[0].code.slice(2), 10);
+      return `KH${String(num + 1).padStart(4, "0")}`;
+    }
+    return "KH0001";
+  };
+
+  const mutation = useMutation({
+    mutationFn: async () => {
+      if (!name.trim()) throw new Error("Tên khách hàng không được để trống");
+      const code = await generateCode();
+      const { data, error } = await supabase
+        .from("customers")
+        .insert({ code, name: name.trim(), phone: phone.trim() || null })
+        .select()
+        .single();
+      if (error) throw error;
+      return data as Customer;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["customers"] });
+      toast.success("Đã thêm khách hàng");
+      onSuccess(data);
+      onOpenChange(false);
+      reset();
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => { onOpenChange(v); if (!v) reset(); }}>
+      <DialogContent className="max-w-sm">
+        <DialogHeader><DialogTitle>Thêm khách hàng mới</DialogTitle></DialogHeader>
+        <div className="space-y-3">
+          <div>
+            <Label>Tên khách hàng *</Label>
+            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nhập tên" />
+          </div>
+          <div>
+            <Label>Số điện thoại</Label>
+            <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Nhập SĐT" />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => { onOpenChange(false); reset(); }}>Hủy</Button>
+          <Button onClick={() => mutation.mutate()} disabled={!name.trim() || mutation.isPending}>
+            {mutation.isPending ? "Đang lưu..." : "Lưu"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+// ─── Main POS Page ───────────────────────────────────────────────
 const SalesPage = () => {
   const queryClient = useQueryClient();
-  const [open, setOpen] = useState(false);
-  const [detailOpen, setDetailOpen] = useState(false);
-  const [detailOrder, setDetailOrder] = useState<SalesOrder | null>(null);
-  const [detailItems, setDetailItems] = useState<any[]>([]);
-  const [code, setCode] = useState("");
-  const [customerId, setCustomerId] = useState("");
+
+  // State
   const [cart, setCart] = useState<CartItem[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [customerId, setCustomerId] = useState("");
+  const [customerOpen, setCustomerOpen] = useState(false);
+  const [addCustomerOpen, setAddCustomerOpen] = useState(false);
+  const [discount, setDiscount] = useState(0);
+  const [amountPaid, setAmountPaid] = useState(0);
+  const [amountPaidManual, setAmountPaidManual] = useState(false);
+  const [invoiceCode, setInvoiceCode] = useState("Đang tạo...");
 
-  const { data: salesOrders = [], isLoading } = useQuery({
-    queryKey: ["sales_orders"],
+  // Generate code on mount
+  useState(() => {
+    generateSalesCode().then(setInvoiceCode);
+  });
+
+  // ─── Data fetching ─────────────────────────────────────────────
+  const { data: products = [] } = useQuery({
+    queryKey: ["products"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("sales_orders").select("*").order("created_at", { ascending: false });
+        .from("products")
+        .select("id, code, name, sale_price, stock_quantity")
+        .order("name");
       if (error) throw error;
-      return data as SalesOrder[];
+      return data as Product[];
     },
   });
 
   const { data: customers = [] } = useQuery({
     queryKey: ["customers"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("customers").select("id, code, name").order("name");
+      const { data, error } = await supabase
+        .from("customers")
+        .select("id, code, name, phone")
+        .order("name");
       if (error) throw error;
       return data as Customer[];
     },
   });
 
-  const { data: products = [] } = useQuery({
-    queryKey: ["products"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("products").select("id, code, name, sale_price, stock_quantity").order("name");
-      if (error) throw error;
-      return data as Product[];
+  // ─── Computed ──────────────────────────────────────────────────
+  const totalAmount = useMemo(
+    () => cart.reduce((sum, i) => sum + i.quantity * i.unit_price, 0),
+    [cart]
+  );
+  const totalToPay = Math.max(0, totalAmount - discount);
+  const change = Math.max(0, amountPaid - totalToPay);
+
+  // Auto-sync amountPaid to totalToPay unless user manually edited
+  const effectivePaid = amountPaidManual ? amountPaid : totalToPay;
+  const effectiveChange = Math.max(0, effectivePaid - totalToPay);
+
+  const filteredProducts = useMemo(() => {
+    if (!searchTerm.trim()) return [];
+    const term = searchTerm.toLowerCase();
+    return products
+      .filter(
+        (p) =>
+          (p.name.toLowerCase().includes(term) || p.code.toLowerCase().includes(term)) &&
+          p.stock_quantity > 0
+      )
+      .slice(0, 8);
+  }, [products, searchTerm]);
+
+  const selectedCustomer = customers.find((c) => c.id === customerId);
+
+  // ─── Cart actions ──────────────────────────────────────────────
+  const addToCart = useCallback(
+    (productId: string) => {
+      const product = products.find((p) => p.id === productId);
+      if (!product) return;
+      if (product.stock_quantity <= 0) {
+        toast.warning(`${product.name} đã hết hàng`);
+        return;
+      }
+
+      setCart((prev) => {
+        const existing = prev.find((c) => c.product_id === productId);
+        if (existing) {
+          return prev.map((c) =>
+            c.product_id === productId
+              ? { ...c, quantity: Math.min(c.quantity + 1, c.max_stock) }
+              : c
+          );
+        }
+        return [
+          ...prev,
+          {
+            product_id: product.id,
+            product_code: product.code,
+            product_name: product.name,
+            quantity: 1,
+            unit_price: product.sale_price,
+            max_stock: product.stock_quantity,
+          },
+        ];
+      });
+      setSearchTerm("");
     },
-  });
-
-  const customerMap = Object.fromEntries(customers.map((c) => [c.id, c]));
-  const totalAmount = cart.reduce((sum, item) => sum + item.quantity * item.unit_price, 0);
-
-  const filteredProducts = products.filter(
-    (p) =>
-      !cart.some((c) => c.product_id === p.id) &&
-      (p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.code.toLowerCase().includes(searchTerm.toLowerCase()))
+    [products]
   );
 
-  const addToCart = (productId: string) => {
-    const product = products.find((p) => p.id === productId);
-    if (!product) return;
-    if (product.stock_quantity <= 0) {
-      toast.warning(`${product.name} đã hết hàng`);
-      return;
-    }
-    setCart([...cart, {
-      product_id: product.id,
-      product_name: product.name,
-      product_code: product.code,
-      quantity: 1,
-      unit_price: product.sale_price,
-      stock: product.stock_quantity,
-    }]);
-    setSearchTerm("");
-  };
+  const updateQty = useCallback((productId: string, qty: number) => {
+    setCart((prev) =>
+      prev.map((c) =>
+        c.product_id === productId
+          ? { ...c, quantity: Math.min(Math.max(1, qty), c.max_stock) }
+          : c
+      )
+    );
+  }, []);
 
-  const updateCartQty = (productId: string, qty: number) => {
-    setCart(cart.map((c) => c.product_id === productId ? { ...c, quantity: Math.min(Math.max(1, qty), c.stock) } : c));
-  };
+  const updatePrice = useCallback((productId: string, price: number) => {
+    setCart((prev) =>
+      prev.map((c) => (c.product_id === productId ? { ...c, unit_price: price } : c))
+    );
+  }, []);
 
-  const updateCartPrice = (productId: string, price: number) => {
-    setCart(cart.map((c) => c.product_id === productId ? { ...c, unit_price: price } : c));
-  };
+  const removeItem = useCallback((productId: string) => {
+    setCart((prev) => prev.filter((c) => c.product_id !== productId));
+  }, []);
 
-  const removeFromCart = (productId: string) => {
-    setCart(cart.filter((c) => c.product_id !== productId));
-  };
-
-  const submitMutation = useMutation({
+  // ─── Checkout ──────────────────────────────────────────────────
+  const checkoutMutation = useMutation({
     mutationFn: async () => {
-      if (cart.length === 0) throw new Error("Chưa có sản phẩm nào");
+      if (cart.length === 0) throw new Error("Chưa có sản phẩm nào trong giỏ hàng");
 
       // Validate stock
       for (const item of cart) {
-        if (item.quantity > item.stock) {
-          throw new Error(`${item.product_name} chỉ còn ${item.stock} trong kho`);
+        const product = products.find((p) => p.id === item.product_id);
+        if (product && item.quantity > product.stock_quantity) {
+          throw new Error(`${item.product_name} chỉ còn ${product.stock_quantity} trong kho`);
         }
       }
 
-      // 1. Create sales order
+      const code = await generateSalesCode();
+
+      // Step A: Create sales order
       const { data: order, error: orderError } = await supabase
         .from("sales_orders")
-        .insert({ code, customer_id: customerId || null, total_amount: totalAmount })
+        .insert({
+          code,
+          customer_id: customerId || null,
+          total_amount: totalToPay,
+        })
         .select()
         .single();
       if (orderError) throw orderError;
 
-      // 2. Create sales order items
+      // Step B: Create sales order items
       const items = cart.map((c) => ({
         sales_order_id: order.id,
         product_id: c.product_id,
@@ -158,252 +299,283 @@ const SalesPage = () => {
       const { error: itemsError } = await supabase.from("sales_order_items").insert(items);
       if (itemsError) throw itemsError;
 
-      // 3. Deduct stock
+      // Step C: Deduct stock
       for (const item of cart) {
         const product = products.find((p) => p.id === item.product_id);
         if (product) {
-          const { error: updateError } = await supabase
+          const { error } = await supabase
             .from("products")
             .update({ stock_quantity: product.stock_quantity - item.quantity })
             .eq("id", item.product_id);
-          if (updateError) throw updateError;
+          if (error) throw error;
         }
       }
+
+      return code;
     },
-    onSuccess: () => {
+    onSuccess: async (code) => {
       queryClient.invalidateQueries({ queryKey: ["sales_orders"] });
       queryClient.invalidateQueries({ queryKey: ["products"] });
-      toast.success("Đã tạo đơn bán hàng thành công");
-      setOpen(false);
+      toast.success(`Thanh toán thành công! Mã: ${code}`);
+      // Reset
+      setCart([]);
+      setCustomerId("");
+      setDiscount(0);
+      setAmountPaid(0);
+      setAmountPaidManual(false);
+      setInvoiceCode(await generateSalesCode());
     },
     onError: (e: any) => toast.error(e.message),
   });
 
-  const openAdd = async () => {
-    setCode(await generateSalesCode());
-    setCustomerId("");
-    setCart([]);
-    setSearchTerm("");
-    setOpen(true);
-  };
-
-  const viewDetail = async (order: SalesOrder) => {
-    setDetailOrder(order);
-    const { data } = await supabase
-      .from("sales_order_items")
-      .select("*, products:product_id(code, name)")
-      .eq("sales_order_id", order.id);
-    setDetailItems(data || []);
-    setDetailOpen(true);
-  };
-
+  // ─── Render ────────────────────────────────────────────────────
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Bán hàng</h1>
-        <Button onClick={openAdd}>
-          <ShoppingCart className="mr-2 h-4 w-4" /> Tạo đơn bán hàng
-        </Button>
-      </div>
-
-      <div className="bg-card rounded-lg border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Mã đơn</TableHead>
-              <TableHead>Khách hàng</TableHead>
-              <TableHead className="text-right">Tổng tiền</TableHead>
-              <TableHead>Ngày tạo</TableHead>
-              <TableHead className="w-[80px]">Xem</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground">Đang tải...</TableCell></TableRow>
-            ) : salesOrders.length === 0 ? (
-              <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground">Chưa có đơn bán hàng nào</TableCell></TableRow>
-            ) : (
-              salesOrders.map((o) => (
-                <TableRow key={o.id}>
-                  <TableCell className="font-mono">{o.code}</TableCell>
-                  <TableCell>{o.customer_id ? customerMap[o.customer_id]?.name || "—" : "Khách lẻ"}</TableCell>
-                  <TableCell className="text-right">{formatVND(o.total_amount)}</TableCell>
-                  <TableCell className="text-muted-foreground">{new Date(o.created_at).toLocaleDateString("vi-VN")}</TableCell>
-                  <TableCell>
-                    <Button variant="ghost" size="icon" onClick={() => viewDetail(o)}>
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
-
-      {/* Create Sales Order Dialog */}
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Tạo đơn bán hàng</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>Mã đơn hàng</Label>
-                <Input value={code} disabled className="font-mono bg-muted" />
-              </div>
-              <div>
-                <Label>Khách hàng</Label>
-                <Select value={customerId} onValueChange={setCustomerId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Khách lẻ" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {customers.map((c) => (
-                      <SelectItem key={c.id} value={c.id}>{c.code} - {c.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            {/* Product search */}
-            <div>
-              <Label>Thêm sản phẩm</Label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Tìm theo tên hoặc mã sản phẩm..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-9"
-                />
-              </div>
-              {searchTerm && filteredProducts.length > 0 && (
-                <div className="border rounded-md mt-1 max-h-40 overflow-y-auto bg-popover">
-                  {filteredProducts.slice(0, 8).map((p) => (
-                    <button
-                      key={p.id}
-                      className="w-full px-3 py-2 text-left hover:bg-accent flex justify-between items-center text-sm"
-                      onClick={() => addToCart(p.id)}
-                    >
-                      <span className="font-mono text-muted-foreground mr-2">{p.code}</span>
-                      <span className="flex-1">{p.name}</span>
-                      <span className="text-muted-foreground ml-2">Tồn: {p.stock_quantity}</span>
-                      <span className="ml-2 font-medium">{formatVND(p.sale_price)}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Cart */}
-            {cart.length > 0 && (
-              <div className="border rounded-lg">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Mã SP</TableHead>
-                      <TableHead>Tên</TableHead>
-                      <TableHead className="w-[90px]">Tồn</TableHead>
-                      <TableHead className="w-[90px]">SL</TableHead>
-                      <TableHead className="w-[130px]">Đơn giá</TableHead>
-                      <TableHead className="text-right">Thành tiền</TableHead>
-                      <TableHead className="w-[50px]"></TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {cart.map((item) => (
-                      <TableRow key={item.product_id}>
-                        <TableCell className="font-mono">{item.product_code}</TableCell>
-                        <TableCell>{item.product_name}</TableCell>
-                        <TableCell className="text-muted-foreground">{item.stock}</TableCell>
-                        <TableCell>
-                          <Input
-                            type="number"
-                            min={1}
-                            max={item.stock}
-                            value={item.quantity}
-                            onChange={(e) => updateCartQty(item.product_id, parseInt(e.target.value) || 1)}
-                            className="h-8"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            type="number"
-                            min={0}
-                            value={item.unit_price}
-                            onChange={(e) => updateCartPrice(item.product_id, parseFloat(e.target.value) || 0)}
-                            className="h-8"
-                          />
-                        </TableCell>
-                        <TableCell className="text-right font-medium">{formatVND(item.quantity * item.unit_price)}</TableCell>
-                        <TableCell>
-                          <Button variant="ghost" size="icon" onClick={() => removeFromCart(item.product_id)} className="h-8 w-8">
-                            <Trash2 className="h-3 w-3 text-destructive" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                    <TableRow>
-                      <TableCell colSpan={5} className="text-right font-bold text-lg">Tổng cộng:</TableCell>
-                      <TableCell className="text-right font-bold text-lg">{formatVND(totalAmount)}</TableCell>
-                      <TableCell />
-                    </TableRow>
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>Hủy</Button>
-            <Button onClick={() => submitMutation.mutate()} disabled={cart.length === 0 || submitMutation.isPending}>
-              {submitMutation.isPending ? "Đang xử lý..." : "Thanh toán"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Detail Dialog */}
-      <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Chi tiết đơn: {detailOrder?.code}</DialogTitle>
-          </DialogHeader>
-          {detailOrder && (
-            <div className="space-y-3">
-              <p><span className="text-muted-foreground">Khách hàng:</span> {detailOrder.customer_id ? customerMap[detailOrder.customer_id]?.name || "—" : "Khách lẻ"}</p>
-              <p><span className="text-muted-foreground">Ngày:</span> {new Date(detailOrder.created_at).toLocaleString("vi-VN")}</p>
-              <div className="border rounded-lg">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Mã SP</TableHead>
-                      <TableHead>Tên SP</TableHead>
-                      <TableHead className="text-right">SL</TableHead>
-                      <TableHead className="text-right">Đơn giá</TableHead>
-                      <TableHead className="text-right">Thành tiền</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {detailItems.map((item: any) => (
-                      <TableRow key={item.id}>
-                        <TableCell className="font-mono">{item.products?.code || "—"}</TableCell>
-                        <TableCell>{item.products?.name || "—"}</TableCell>
-                        <TableCell className="text-right">{item.quantity}</TableCell>
-                        <TableCell className="text-right">{formatVND(item.unit_price)}</TableCell>
-                        <TableCell className="text-right font-medium">{formatVND(item.quantity * item.unit_price)}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-              <p className="text-right font-bold text-lg">Tổng: {formatVND(detailOrder.total_amount)}</p>
+    <div className="flex gap-4 h-[calc(100vh-6rem)]">
+      {/* ═══ LEFT COLUMN ═══ */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Search */}
+        <div className="relative mb-3">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Tìm sản phẩm theo tên hoặc mã hàng (F3)..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10 h-11 text-base"
+            autoFocus
+          />
+          {searchTerm && filteredProducts.length > 0 && (
+            <div className="absolute z-50 top-full left-0 right-0 mt-1 border rounded-lg bg-popover shadow-lg max-h-64 overflow-y-auto">
+              {filteredProducts.map((p) => (
+                <button
+                  key={p.id}
+                  className="w-full px-4 py-2.5 text-left hover:bg-accent flex items-center gap-3 text-sm border-b last:border-b-0 transition-colors"
+                  onClick={() => addToCart(p.id)}
+                >
+                  <span className="font-mono text-muted-foreground w-20 shrink-0">{p.code}</span>
+                  <span className="flex-1 truncate">{p.name}</span>
+                  <span className="text-muted-foreground text-xs">Tồn: {p.stock_quantity}</span>
+                  <span className="font-medium text-primary w-28 text-right">{fmt(p.sale_price)}</span>
+                </button>
+              ))}
             </div>
           )}
-        </DialogContent>
-      </Dialog>
+          {searchTerm && filteredProducts.length === 0 && (
+            <div className="absolute z-50 top-full left-0 right-0 mt-1 border rounded-lg bg-popover shadow-lg px-4 py-3 text-sm text-muted-foreground">
+              Không tìm thấy sản phẩm
+            </div>
+          )}
+        </div>
+
+        {/* Cart Table */}
+        <div className="flex-1 border rounded-lg bg-card overflow-auto">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/50">
+                <TableHead className="w-10"></TableHead>
+                <TableHead className="w-24">Mã hàng</TableHead>
+                <TableHead>Tên hàng</TableHead>
+                <TableHead className="w-32 text-center">Số lượng</TableHead>
+                <TableHead className="w-36 text-right">Đơn giá</TableHead>
+                <TableHead className="w-36 text-right">Thành tiền</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {cart.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-16">
+                    <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                      <ShoppingCart className="h-10 w-10 opacity-30" />
+                      <p>Tìm và chọn sản phẩm để thêm vào giỏ hàng</p>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                cart.map((item, idx) => (
+                  <TableRow key={item.product_id}>
+                    <TableCell className="text-center">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        onClick={() => removeItem(item.product_id)}
+                      >
+                        <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                      </Button>
+                    </TableCell>
+                    <TableCell className="font-mono text-muted-foreground">{item.product_code}</TableCell>
+                    <TableCell className="font-medium">{item.product_name}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center justify-center gap-1">
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-7 w-7"
+                          onClick={() => updateQty(item.product_id, item.quantity - 1)}
+                          disabled={item.quantity <= 1}
+                        >
+                          <Minus className="h-3 w-3" />
+                        </Button>
+                        <Input
+                          type="number"
+                          min={1}
+                          max={item.max_stock}
+                          value={item.quantity}
+                          onChange={(e) => updateQty(item.product_id, parseInt(e.target.value) || 1)}
+                          className="h-7 w-14 text-center px-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        />
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-7 w-7"
+                          onClick={() => updateQty(item.product_id, item.quantity + 1)}
+                          disabled={item.quantity >= item.max_stock}
+                        >
+                          <Plus className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <CurrencyInput
+                        value={item.unit_price}
+                        onChange={(v) => updatePrice(item.product_id, v)}
+                        className={cn(inputClass, "h-7 text-right w-full")}
+                      />
+                    </TableCell>
+                    <TableCell className="text-right font-semibold">
+                      {fmt(item.quantity * item.unit_price)}
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
+
+      {/* ═══ RIGHT COLUMN ═══ */}
+      <div className="w-[340px] shrink-0 flex flex-col gap-3">
+        {/* Invoice code */}
+        <div className="bg-card border rounded-lg p-4">
+          <Label className="text-muted-foreground text-xs">Mã hóa đơn</Label>
+          <p className="font-mono font-semibold text-lg">{invoiceCode}</p>
+        </div>
+
+        {/* Customer selection */}
+        <div className="bg-card border rounded-lg p-4">
+          <Label className="text-muted-foreground text-xs mb-1.5 block">Khách hàng</Label>
+          <div className="flex gap-1.5">
+            <Popover open={customerOpen} onOpenChange={setCustomerOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  className="flex-1 justify-between h-9 text-sm font-normal"
+                >
+                  {selectedCustomer
+                    ? `${selectedCustomer.code} - ${selectedCustomer.name}`
+                    : "Khách lẻ"}
+                  <ChevronsUpDown className="ml-1 h-3.5 w-3.5 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[300px] p-0" align="start">
+                <Command>
+                  <CommandInput placeholder="Tìm khách hàng..." className="text-sm" />
+                  <CommandList>
+                    <CommandEmpty className="text-sm py-3">Không tìm thấy</CommandEmpty>
+                    <CommandGroup>
+                      {customers.map((c) => (
+                        <CommandItem
+                          key={c.id}
+                          value={`${c.code} ${c.name} ${c.phone || ""}`}
+                          onSelect={() => {
+                            setCustomerId(c.id === customerId ? "" : c.id);
+                            setCustomerOpen(false);
+                          }}
+                          className="text-sm"
+                        >
+                          <Check
+                            className={cn(
+                              "mr-2 h-3.5 w-3.5",
+                              customerId === c.id ? "opacity-100" : "opacity-0"
+                            )}
+                          />
+                          <span className="font-mono text-muted-foreground mr-2">{c.code}</span>
+                          {c.name}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-9 w-9 shrink-0"
+              onClick={() => setAddCustomerOpen(true)}
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+
+        {/* Order Summary */}
+        <div className="bg-card border rounded-lg p-4 flex-1 flex flex-col gap-3">
+          <div className="flex justify-between items-center">
+            <span className="text-sm text-muted-foreground">Tổng tiền hàng</span>
+            <span className="font-semibold">{fmt(totalAmount)}</span>
+          </div>
+
+          <div className="flex justify-between items-center gap-3">
+            <span className="text-sm text-muted-foreground">Giảm giá</span>
+            <CurrencyInput
+              value={discount}
+              onChange={setDiscount}
+              className={cn(inputClass, "h-8 w-32 text-right")}
+            />
+          </div>
+
+          <div className="border-t pt-3 flex justify-between items-center">
+            <span className="font-semibold">Khách cần trả</span>
+            <span className="text-xl font-bold text-primary">{fmt(totalToPay)}</span>
+          </div>
+
+          <div className="flex justify-between items-center gap-3">
+            <span className="text-sm text-muted-foreground">Khách thanh toán</span>
+            <CurrencyInput
+              value={effectivePaid}
+              onChange={(v) => {
+                setAmountPaid(v);
+                setAmountPaidManual(true);
+              }}
+              className={cn(inputClass, "h-8 w-32 text-right")}
+            />
+          </div>
+
+          <div className="flex justify-between items-center">
+            <span className="text-sm text-muted-foreground">Tiền thừa trả khách</span>
+            <span className="font-semibold text-green-600">{fmt(effectiveChange)}</span>
+          </div>
+
+          <div className="flex-1" />
+
+          {/* Checkout button */}
+          <Button
+            className="w-full h-14 text-lg font-bold bg-[hsl(var(--success))] hover:bg-[hsl(var(--success))]/90 text-[hsl(var(--success-foreground))]"
+            onClick={() => checkoutMutation.mutate()}
+            disabled={cart.length === 0 || checkoutMutation.isPending}
+          >
+            {checkoutMutation.isPending ? "Đang xử lý..." : "THANH TOÁN"}
+          </Button>
+        </div>
+      </div>
+
+      {/* Add Customer Modal */}
+      <AddCustomerModal
+        open={addCustomerOpen}
+        onOpenChange={setAddCustomerOpen}
+        onSuccess={(c) => setCustomerId(c.id)}
+      />
     </div>
   );
 };
