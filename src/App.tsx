@@ -3,7 +3,16 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AppLayout } from "@/components/AppLayout";
 import Index from "./pages/Index";
+import SalesPage from "./pages/SalesPage";
+import ImportsPage from "./pages/ImportsPage";
+import ProductsPage from "./pages/ProductsPage";
+import CategoriesPage from "./pages/CategoriesPage";
+import SuppliersPage from "./pages/SuppliersPage";
+import CustomersPage from "./pages/CustomersPage";
+import ReportsPage from "./pages/ReportsPage";
+import SettingsPage from "./pages/SettingsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -15,8 +24,17 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Index />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          <Route element={<AppLayout />}>
+            <Route path="/" element={<Index />} />
+            <Route path="/sales" element={<SalesPage />} />
+            <Route path="/imports" element={<ImportsPage />} />
+            <Route path="/products" element={<ProductsPage />} />
+            <Route path="/categories" element={<CategoriesPage />} />
+            <Route path="/suppliers" element={<SuppliersPage />} />
+            <Route path="/customers" element={<CustomersPage />} />
+            <Route path="/reports" element={<ReportsPage />} />
+            <Route path="/settings" element={<SettingsPage />} />
+          </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
