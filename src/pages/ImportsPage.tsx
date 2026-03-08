@@ -101,7 +101,7 @@ const ImportsPage = () => {
     },
   });
 
-  const supplierMap = Object.fromEntries(suppliers.map((s) => [s.id, s]));
+  
 
   const totalAmount = cart.reduce((sum, item) => sum + item.quantity * item.unit_cost, 0);
 
