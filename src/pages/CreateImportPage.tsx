@@ -73,6 +73,11 @@ const CreateImportPage = () => {
   const [alreadyPaid, setAlreadyPaid] = useState(0);
   const [payingAmount, setPayingAmount] = useState(0);
   const [notes, setNotes] = useState("");
+  const [importDate, setImportDate] = useState(() => {
+    const now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    return now.toISOString().slice(0, 16);
+  });
   const [cart, setCart] = useState<CartItem[]>(DUMMY_ITEMS);
   const [searchTerm, setSearchTerm] = useState("");
   const [searchFocused, setSearchFocused] = useState(false);
@@ -166,7 +171,7 @@ const CreateImportPage = () => {
 
       const { data: order, error: orderError } = await supabase
         .from("import_orders")
-        .insert({ code, supplier_id: supplierId || null, total_amount: totalAmount, discount: globalDiscount, amount_paid: payingAmount, notes: notes.trim() })
+        .insert({ code, supplier_id: supplierId || null, total_amount: totalAmount, discount: globalDiscount, amount_paid: payingAmount, notes: notes.trim(), created_at: new Date(importDate).toISOString() })
         .select().single();
       if (orderError) throw orderError;
 
@@ -377,6 +382,17 @@ const CreateImportPage = () => {
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">Mã phiếu nhập</span>
                 <span className="font-mono text-foreground">{code || "Mã phiếu tự động"}</span>
+              </div>
+
+              {/* Ngày nhập */}
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">Ngày nhập</span>
+                <input
+                  type="datetime-local"
+                  value={importDate}
+                  onChange={(e) => setImportDate(e.target.value)}
+                  className="h-7 text-xs border-0 border-b border-border/60 rounded-none bg-transparent shadow-none focus:outline-none focus:border-primary px-0 text-foreground"
+                />
               </div>
 
               {/* Trạng thái */}
