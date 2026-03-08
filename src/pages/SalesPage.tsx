@@ -140,6 +140,7 @@ const AddCustomerModal = ({
 // ─── Main POS Page ───────────────────────────────────────────────
 const SalesPage = () => {
   const queryClient = useQueryClient();
+  const searchRef = useRef<ProductSearchDropdownRef>(null);
 
   // State
   const [cart, setCart] = useState<CartItem[]>([]);
