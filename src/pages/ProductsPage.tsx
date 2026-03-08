@@ -7,9 +7,9 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, Search } from "lucide-react";
+import { Plus, Trash2, Search, History } from "lucide-react";
 import { AddProductModal } from "@/components/AddProductModal";
-
+import { StockLedgerSheet } from "@/components/StockLedgerSheet";
 type Product = {
   id: string;
   code: string;
