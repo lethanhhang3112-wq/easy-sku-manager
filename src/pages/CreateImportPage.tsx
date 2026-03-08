@@ -22,6 +22,7 @@ import {
 import { toast } from "sonner";
 import { Search, Plus, X, ChevronsUpDown, Check, PenLine, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { CurrencyInput, formatCurrency } from "@/components/CurrencyInput";
 
 // ─── Types ───────────────────────────────────────────────────────
 type Supplier = { id: string; code: string; name: string; phone: string | null; address: string | null };
