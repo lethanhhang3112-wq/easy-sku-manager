@@ -100,6 +100,7 @@ function ProductInfoTab({ product, onSaved }: { product: Product; onSaved: () =>
   const [categoryId, setCategoryId] = useState(product.category_id || "");
   const [costPrice, setCostPrice] = useState(product.cost_price);
   const [salePrice, setSalePrice] = useState(product.sale_price);
+  const [stockQuantity, setStockQuantity] = useState(product.stock_quantity);
   const [categoryOpen, setCategoryOpen] = useState(false);
 
   useEffect(() => {
@@ -108,6 +109,7 @@ function ProductInfoTab({ product, onSaved }: { product: Product; onSaved: () =>
     setCategoryId(product.category_id || "");
     setCostPrice(product.cost_price);
     setSalePrice(product.sale_price);
+    setStockQuantity(product.stock_quantity);
   }, [product]);
 
   const { data: categories = [] } = useQuery({
@@ -132,6 +134,7 @@ function ProductInfoTab({ product, onSaved }: { product: Product; onSaved: () =>
           category_id: categoryId || null,
           cost_price: costPrice,
           sale_price: salePrice,
+          stock_quantity: stockQuantity,
         })
         .eq("id", product.id);
       if (error) throw error;
@@ -204,7 +207,12 @@ function ProductInfoTab({ product, onSaved }: { product: Product; onSaved: () =>
       </div>
       <div>
         <Label>Tồn kho</Label>
-        <Input value={product.stock_quantity} disabled className="bg-muted" />
+        <Input
+          type="number"
+          min={0}
+          value={stockQuantity}
+          onChange={(e) => setStockQuantity(Math.max(0, parseInt(e.target.value) || 0))}
+        />
       </div>
       <Button onClick={() => updateMutation.mutate()} disabled={!name.trim() || updateMutation.isPending} className="w-full">
         {updateMutation.isPending ? "Đang lưu..." : "Lưu thay đổi"}
