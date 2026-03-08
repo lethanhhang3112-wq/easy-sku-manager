@@ -412,6 +412,7 @@ export function StockLedgerTab({ product }: { product: Product }) {
               <TableHead className="text-right min-w-[70px]">Tồn cuối</TableHead>
               <TableHead className="text-right min-w-[90px]">Giá giao dịch</TableHead>
               <TableHead className="text-right min-w-[90px]">Giá trị GD</TableHead>
+              <TableHead className="text-right min-w-[90px]">Giá vốn</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
