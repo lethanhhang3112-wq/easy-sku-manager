@@ -82,7 +82,7 @@ const CreateImportPage = () => {
     return now.toISOString().slice(0, 16);
   });
   const [cart, setCart] = useState<CartItem[]>(DUMMY_ITEMS);
-  const [searchFocused, setSearchFocused] = useState(false);
+  
 
   const [addSupplierOpen, setAddSupplierOpen] = useState(false);
   const [newSupplierName, setNewSupplierName] = useState("");
