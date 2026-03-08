@@ -296,7 +296,8 @@ const ImportsPage = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["import_orders"] });
-      toast.success("Đã cập nhật phiếu nhập");
+      setIsEditing(false);
+      toast.success("Cập nhật phiếu nhập thành công!");
     },
     onError: (e: any) => toast.error(e.message),
   });
