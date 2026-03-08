@@ -36,7 +36,7 @@ type CartItem = {
   item_discount: number;
 };
 
-const fmt = (n: number) => new Intl.NumberFormat("vi-VN").format(n);
+const fmt = (n: number) => formatCurrency(n);
 
 async function generateImportCode(): Promise<string> {
   const now = new Date();
