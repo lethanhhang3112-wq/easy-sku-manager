@@ -420,7 +420,7 @@ const CreateImportPage = () => {
                   <span className="text-muted-foreground">Tổng tiền hàng</span>
                   <Badge variant="secondary" className="text-[10px] h-4 px-1.5 font-normal min-w-[20px] justify-center">{totalQuantity}</Badge>
                 </div>
-                <span className="font-semibold text-foreground text-sm">{fmt(totalAmount)}</span>
+                <span className="font-semibold text-foreground text-sm">{formatCurrency(totalAmount)}</span>
               </div>
 
               {/* Giảm giá */}
