@@ -25,6 +25,7 @@ type ImportOrder = {
   supplier_id: string | null;
   total_amount: number;
   created_at: string;
+  suppliers: { name: string } | null;
 };
 type CartItem = {
   product_id: string;
@@ -75,7 +76,7 @@ const ImportsPage = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("import_orders")
-        .select("*")
+        .select("*, suppliers(name)")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data as ImportOrder[];
@@ -100,7 +101,7 @@ const ImportsPage = () => {
     },
   });
 
-  const supplierMap = Object.fromEntries(suppliers.map((s) => [s.id, s]));
+  
 
   const totalAmount = cart.reduce((sum, item) => sum + item.quantity * item.unit_cost, 0);
 
@@ -226,7 +227,7 @@ const ImportsPage = () => {
               importOrders.map((o) => (
                 <TableRow key={o.id}>
                   <TableCell className="font-mono">{o.code}</TableCell>
-                  <TableCell>{o.supplier_id ? supplierMap[o.supplier_id]?.name || "—" : "—"}</TableCell>
+                  <TableCell>{o.suppliers?.name || "—"}</TableCell>
                   <TableCell className="text-right">{formatVND(o.total_amount)}</TableCell>
                   <TableCell className="text-muted-foreground">{new Date(o.created_at).toLocaleDateString("vi-VN")}</TableCell>
                   <TableCell>
@@ -355,7 +356,7 @@ const ImportsPage = () => {
           </DialogHeader>
           {detailOrder && (
             <div className="space-y-3">
-              <p><span className="text-muted-foreground">NCC:</span> {detailOrder.supplier_id ? supplierMap[detailOrder.supplier_id]?.name || "—" : "—"}</p>
+              <p><span className="text-muted-foreground">NCC:</span> {detailOrder.suppliers?.name || "—"}</p>
               <p><span className="text-muted-foreground">Ngày:</span> {new Date(detailOrder.created_at).toLocaleString("vi-VN")}</p>
               <div className="border rounded-lg">
                 <Table>
