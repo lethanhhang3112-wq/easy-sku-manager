@@ -132,20 +132,24 @@ function computeWeightedAverage(entries: LedgerEntry[]): ComputedRow[] {
       inQty = qty;
       transactionPrice = e.price;
       transactionValue = qty * e.price;
-      // MAC formula: New MAC = ((Current Qty * Current MAC) + (Import Qty * Import Price)) / (Current Qty + Import Qty)
+
       const newTotalQty = runningQty + qty;
-      if (newTotalQty > 0) {
+      if (runningQty <= 0 || runningMAC === 0) {
+        // Edge case: stock was 0 or negative — MAC resets to the new import price
+        runningMAC = e.price;
+      } else if (newTotalQty > 0) {
+        // Standard MAC formula
         runningMAC = ((runningQty * runningMAC) + (qty * e.price)) / newTotalQty;
       }
       runningQty = newTotalQty;
     } else {
       outQty = qty;
       if (outQty > runningQty) overstock = true;
-      // Sale uses current MAC as transaction price; MAC remains unchanged
-      transactionPrice = Math.round(runningMAC * 100) / 100;
+      // Sale: transaction price = current MAC; MAC remains UNCHANGED
+      transactionPrice = Math.round(runningMAC);
       transactionValue = Math.round(outQty * runningMAC);
       runningQty -= outQty;
-      if (runningQty <= 0) { runningQty = 0; runningMAC = 0; }
+      // Allow negative stock; do NOT reset MAC — keep last known cost
     }
 
     let description = "";
@@ -163,7 +167,7 @@ function computeWeightedAverage(entries: LedgerEntry[]): ComputedRow[] {
       transactionPrice,
       transactionValue,
       balanceQty: runningQty,
-      balanceMAC: Math.round(runningMAC * 100) / 100,
+      balanceMAC: Math.round(runningMAC),
       balanceTotal: Math.round(runningQty * runningMAC),
       overstock,
     };
