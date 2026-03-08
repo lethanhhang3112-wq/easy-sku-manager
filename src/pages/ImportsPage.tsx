@@ -59,6 +59,7 @@ async function generateImportCode(): Promise<string> {
 }
 
 const ImportsPage = () => {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
