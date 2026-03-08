@@ -312,7 +312,7 @@ const CreateImportPage = () => {
                   </div>
                 )}
               </div>
-              <Button size="icon" variant="outline" className="h-9 w-9 shrink-0">
+              <Button size="icon" variant="outline" className="h-9 w-9 shrink-0" onClick={() => setAddProductOpen(true)}>
                 <Plus className="h-4 w-4" />
               </Button>
             </div>
