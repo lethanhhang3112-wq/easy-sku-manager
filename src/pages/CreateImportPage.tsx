@@ -24,6 +24,7 @@ import { Search, Plus, X, ChevronsUpDown, Check, PenLine, ArrowLeft } from "luci
 import { cn } from "@/lib/utils";
 import { CurrencyInput, formatCurrency } from "@/components/CurrencyInput";
 import { AddProductModal } from "@/components/AddProductModal";
+import { ProductSearchDropdown } from "@/components/ProductSearchDropdown";
 
 // ─── Types ───────────────────────────────────────────────────────
 type Supplier = { id: string; code: string; name: string; phone: string | null; address: string | null };
