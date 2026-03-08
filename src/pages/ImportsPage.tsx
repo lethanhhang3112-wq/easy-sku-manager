@@ -35,7 +35,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import {
   Plus, Search, Filter, ChevronUp, ChevronDown, CalendarIcon, X,
-  Eye, Printer, Copy, FileDown, Ban, Save, Barcode, PanelLeftClose, PanelLeft,
+  Eye, Printer, Copy, FileDown, Ban, Save, Barcode, PanelLeftClose, PanelLeft, Pencil,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useDebounce } from "@/hooks/use-debounce";
