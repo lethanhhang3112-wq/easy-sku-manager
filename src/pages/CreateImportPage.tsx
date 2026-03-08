@@ -384,6 +384,17 @@ const CreateImportPage = () => {
                 <span className="font-mono text-foreground">{code || "Mã phiếu tự động"}</span>
               </div>
 
+              {/* Ngày nhập */}
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">Ngày nhập</span>
+                <input
+                  type="datetime-local"
+                  value={importDate}
+                  onChange={(e) => setImportDate(e.target.value)}
+                  className="h-7 text-xs border-0 border-b border-border/60 rounded-none bg-transparent shadow-none focus:outline-none focus:border-primary px-0 text-foreground"
+                />
+              </div>
+
               {/* Trạng thái */}
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">Trạng thái</span>
