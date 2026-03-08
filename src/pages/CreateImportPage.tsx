@@ -209,7 +209,12 @@ const CreateImportPage = () => {
 
           {/* Title + Search */}
           <div className="px-5 pt-5 pb-3 space-y-3 border-b bg-card">
-            <h1 className="text-xl font-bold text-foreground">Nhập hàng</h1>
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="icon" className="h-8 w-8 -ml-1" onClick={() => navigate("/imports")}>
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+              <h1 className="text-xl font-bold text-foreground">Nhập hàng</h1>
+            </div>
             <div className="flex gap-2">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
