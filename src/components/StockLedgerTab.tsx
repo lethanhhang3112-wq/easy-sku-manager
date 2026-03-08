@@ -222,14 +222,6 @@ function MobileCard({ row }: { row: ComputedRow }) {
         <span>{row.date ? format(new Date(row.date), "dd/MM/yyyy HH:mm") : "—"}</span>
         <span>Giá GD: {formatVND(row.transactionPrice)}</span>
       </div>
-      <div className="flex items-center justify-between text-xs text-muted-foreground">
-        <span>{row.partnerName || "—"}</span>
-        <span>GT: {formatVND(row.transactionValue)}</span>
-      </div>
-      <div className="flex items-center justify-between text-xs">
-        <span className="text-muted-foreground">Giá vốn:</span>
-        <span className="font-semibold text-primary">{formatVND(row.balanceMAC)}</span>
-      </div>
     </div>
   );
 }
@@ -419,22 +411,20 @@ export function StockLedgerTab({ product }: { product: Product }) {
               <TableHead className="text-right min-w-[60px]">SL thay đổi</TableHead>
               <TableHead className="text-right min-w-[70px]">Tồn cuối</TableHead>
               <TableHead className="text-right min-w-[90px]">Giá giao dịch</TableHead>
-              <TableHead className="text-right min-w-[90px]">Giá trị GD</TableHead>
-              <TableHead className="text-right min-w-[90px]">Giá vốn</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading ? (
               Array.from({ length: 5 }).map((_, i) => (
                 <TableRow key={i}>
-                  {Array.from({ length: 9 }).map((_, j) => (
+                  {Array.from({ length: 7 }).map((_, j) => (
                     <TableCell key={j}><Skeleton className="h-4 w-full" /></TableCell>
                   ))}
                 </TableRow>
               ))
             ) : pagedRows.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                   {hasFilters ? "Không có giao dịch phù hợp bộ lọc" : "Chưa có giao dịch nào"}
                 </TableCell>
               </TableRow>
@@ -454,8 +444,6 @@ export function StockLedgerTab({ product }: { product: Product }) {
                     {r.balanceQty}
                   </TableCell>
                   <TableCell className="text-right text-xs">{formatVND(r.transactionPrice)}</TableCell>
-                  <TableCell className="text-right text-xs font-medium">{formatVND(r.transactionValue)}</TableCell>
-                  <TableCell className="text-right text-xs font-semibold text-primary">{formatVND(r.balanceMAC)}</TableCell>
                 </TableRow>
               ))
             )}
