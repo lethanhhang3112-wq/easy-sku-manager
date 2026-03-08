@@ -25,6 +25,7 @@ type ImportOrder = {
   supplier_id: string | null;
   total_amount: number;
   created_at: string;
+  suppliers: { name: string } | null;
 };
 type CartItem = {
   product_id: string;
