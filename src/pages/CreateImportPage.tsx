@@ -139,6 +139,16 @@ const CreateImportPage = () => {
     setCart((prev) => prev.map((c) => c.product_id === pid ? { ...c, [field]: Math.max(0, value) } : c));
   }, []);
 
+  const updateSubtotal = useCallback((pid: string, newSubtotal: number) => {
+    setCart((prev) => prev.map((c) => {
+      if (c.product_id !== pid) return c;
+      const unitCost = c.quantity > 0 ? (newSubtotal + c.item_discount) / c.quantity : 0;
+      return { ...c, unit_cost: Math.max(0, Math.round(unitCost * 100) / 100) };
+    }));
+  }, []);
+    setCart((prev) => prev.map((c) => c.product_id === pid ? { ...c, [field]: Math.max(0, value) } : c));
+  }, []);
+
   const removeFromCart = useCallback((pid: string) => {
     setCart((prev) => prev.filter((c) => c.product_id !== pid));
   }, []);
