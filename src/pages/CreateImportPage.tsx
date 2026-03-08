@@ -191,7 +191,7 @@ const CreateImportPage = () => {
     onError: (e: any) => toast.error(e.message),
   });
 
-  const saveDraft = () => toast.info("Đã lưu tạm phiếu nhập");
+  
 
   // ═══════════════════════════════════════════════════════════════
   // KiotViet-style inline input: no border, just a subtle bottom line
