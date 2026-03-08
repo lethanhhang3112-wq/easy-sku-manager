@@ -24,6 +24,7 @@ import { Search, Plus, X, ChevronsUpDown, Check, PenLine, ArrowLeft } from "luci
 import { cn } from "@/lib/utils";
 import { CurrencyInput, formatCurrency } from "@/components/CurrencyInput";
 import { AddProductModal } from "@/components/AddProductModal";
+import { ProductSearchDropdown } from "@/components/ProductSearchDropdown";
 
 // ─── Types ───────────────────────────────────────────────────────
 type Supplier = { id: string; code: string; name: string; phone: string | null; address: string | null };
@@ -81,8 +82,7 @@ const CreateImportPage = () => {
     return now.toISOString().slice(0, 16);
   });
   const [cart, setCart] = useState<CartItem[]>(DUMMY_ITEMS);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [searchFocused, setSearchFocused] = useState(false);
+  
 
   const [addSupplierOpen, setAddSupplierOpen] = useState(false);
   const [newSupplierName, setNewSupplierName] = useState("");
@@ -122,13 +122,6 @@ const CreateImportPage = () => {
 
   const selectedSupplier = suppliers.find((s) => s.id === supplierId);
 
-  const filteredProducts = useMemo(() => {
-    if (!searchTerm.trim()) return [];
-    const term = searchTerm.toLowerCase();
-    return products
-      .filter((p) => !cart.some((c) => c.product_id === p.id) && (p.name.toLowerCase().includes(term) || p.code.toLowerCase().includes(term)))
-      .slice(0, 10);
-  }, [searchTerm, products, cart]);
 
   const totalQuantity = useMemo(() => cart.reduce((s, c) => s + c.quantity, 0), [cart]);
   const totalAmount = useMemo(() => cart.reduce((s, c) => s + (c.quantity * c.unit_cost - c.item_discount), 0), [cart]);
@@ -138,14 +131,12 @@ const CreateImportPage = () => {
   const now = new Date();
   const dateTimeStr = `${String(now.getDate()).padStart(2, "0")}/${String(now.getMonth() + 1).padStart(2, "0")}/${now.getFullYear()} ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
 
-  const addToCart = useCallback((product: Product) => {
+  const addToCart = useCallback((product: { id: string; code: string; name: string; cost_price: number }) => {
     if (cart.some((c) => c.product_id === product.id)) return;
     setCart((prev) => [...prev, {
       product_id: product.id, product_code: product.code, product_name: product.name,
       quantity: 1, unit_cost: product.cost_price, item_discount: 0,
     }]);
-    setSearchTerm("");
-    setSearchFocused(false);
   }, [cart]);
 
   const updateField = useCallback((pid: string, field: keyof CartItem, value: number) => {
@@ -250,33 +241,13 @@ const CreateImportPage = () => {
               <h1 className="text-xl font-bold text-foreground">Nhập hàng</h1>
             </div>
             <div className="flex gap-2">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Tìm hàng hóa theo tên, mã hàng (F3)..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  onFocus={() => setSearchFocused(true)}
-                  onBlur={() => setTimeout(() => setSearchFocused(false), 200)}
-                  className="pl-10 h-9"
-                />
-                {searchFocused && filteredProducts.length > 0 && (
-                  <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-popover border rounded-md shadow-lg max-h-60 overflow-y-auto">
-                    {filteredProducts.map((p) => (
-                      <button
-                        key={p.id}
-                        className="w-full px-3 py-2 text-left hover:bg-accent flex items-center gap-3 border-b border-border/40 last:border-b-0 text-sm"
-                        onMouseDown={() => addToCart(p)}
-                      >
-                        <span className="font-mono text-xs text-muted-foreground">{p.code}</span>
-                        <span className="flex-1">{p.name}</span>
-                        <span className="text-xs text-muted-foreground">Tồn: {p.stock_quantity}</span>
-                        <span className="font-medium">{fmt(p.cost_price)}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
+              <ProductSearchDropdown
+                onSelect={(p) => addToCart(p)}
+                excludeIds={cart.map((c) => c.product_id)}
+                displayPrice="cost_price"
+                placeholder="Tìm hàng hóa theo tên, mã hàng (F3)..."
+                className="flex-1"
+              />
               <Button size="icon" variant="outline" className="h-9 w-9 shrink-0" onClick={() => setAddProductOpen(true)}>
                 <Plus className="h-4 w-4" />
               </Button>
