@@ -143,7 +143,6 @@ const SalesPage = () => {
 
   // State
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [searchTerm, setSearchTerm] = useState("");
   const [customerId, setCustomerId] = useState("");
   const [customerOpen, setCustomerOpen] = useState(false);
   const [addCustomerOpen, setAddCustomerOpen] = useState(false);
