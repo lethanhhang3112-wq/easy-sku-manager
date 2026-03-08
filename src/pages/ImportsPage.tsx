@@ -129,6 +129,7 @@ const ImportsPage = () => {
   const [voidTarget, setVoidTarget] = useState<ImportOrder | null>(null);
 
   // Inline edit state
+  const [isEditing, setIsEditing] = useState(false);
   const [editNotes, setEditNotes] = useState("");
   const [editDate, setEditDate] = useState("");
   const [editSupplierId, setEditSupplierId] = useState<string | null>(null);
