@@ -223,7 +223,6 @@ function MobileCard({ row }: { row: ComputedRow }) {
         <span>Giá GD: {formatVND(row.transactionPrice)}</span>
       </div>
     </div>
-    </div>
   );
 }
 
