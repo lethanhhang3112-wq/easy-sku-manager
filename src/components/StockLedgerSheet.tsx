@@ -1,15 +1,10 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription,
 } from "@/components/ui/sheet";
-import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,23 +14,11 @@ import {
 import {
   Popover, PopoverContent, PopoverTrigger,
 } from "@/components/ui/popover";
-import { CurrencyInput, formatCurrency } from "@/components/CurrencyInput";
-import { StockAdjustmentModal } from "@/components/StockAdjustmentModal";
+import { CurrencyInput } from "@/components/CurrencyInput";
+import { StockLedgerTab } from "@/components/StockLedgerTab";
 import { toast } from "sonner";
-import { format } from "date-fns";
-import { ChevronsUpDown, Check, PackagePlus, PackageMinus } from "lucide-react";
+import { ChevronsUpDown, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-type LedgerEntry = {
-  id: string;
-  date: string;
-  code: string;
-  type: "import" | "sale" | "adjust_in" | "adjust_out";
-  partnerName: string;
-  quantity: number;
-  price: number;
-  note?: string;
-};
 
 type Product = {
   id: string;
@@ -53,65 +36,6 @@ type Props = {
   product: Product | null;
 };
 
-const formatVND = (n: number) => new Intl.NumberFormat("vi-VN").format(n);
-
-async function fetchStockLedger(productId: string): Promise<LedgerEntry[]> {
-  const [importsRes, salesRes, adjustRes] = await Promise.all([
-    supabase
-      .from("import_order_items")
-      .select("id, quantity, unit_cost, import_orders(code, created_at, suppliers(name))")
-      .eq("product_id", productId),
-    supabase
-      .from("sales_order_items")
-      .select("id, quantity, unit_price, sales_orders(code, created_at, customers(name))")
-      .eq("product_id", productId),
-    supabase
-      .from("stock_adjustments")
-      .select("*")
-      .eq("product_id", productId),
-  ]);
-
-  if (importsRes.error) throw importsRes.error;
-  if (salesRes.error) throw salesRes.error;
-  if (adjustRes.error) throw adjustRes.error;
-
-  const importEntries: LedgerEntry[] = (importsRes.data ?? []).map((item: any) => ({
-    id: item.id,
-    date: item.import_orders?.created_at ?? "",
-    code: item.import_orders?.code ?? "",
-    type: "import",
-    partnerName: item.import_orders?.suppliers?.name ?? "N/A",
-    quantity: item.quantity,
-    price: item.unit_cost,
-  }));
-
-  const saleEntries: LedgerEntry[] = (salesRes.data ?? []).map((item: any) => ({
-    id: item.id,
-    date: item.sales_orders?.created_at ?? "",
-    code: item.sales_orders?.code ?? "",
-    type: "sale",
-    partnerName: item.sales_orders?.customers?.name ?? "Khách lẻ",
-    quantity: -item.quantity,
-    price: item.unit_price,
-  }));
-
-  const adjustEntries: LedgerEntry[] = (adjustRes.data ?? []).map((item: any) => ({
-    id: item.id,
-    date: item.created_at,
-    code: item.type === "in" ? "ADJ-IN" : "ADJ-OUT",
-    type: item.type === "in" ? "adjust_in" : "adjust_out",
-    partnerName: "",
-    quantity: item.type === "in" ? item.quantity : -item.quantity,
-    price: item.unit_price,
-    note: item.note,
-  }));
-
-  return [...importEntries, ...saleEntries, ...adjustEntries].sort(
-    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-  );
-}
-
-// --- Product Info Tab ---
 function ProductInfoTab({ product, onSaved }: { product: Product; onSaved: () => void }) {
   const queryClient = useQueryClient();
   const [name, setName] = useState(product.name);
@@ -240,219 +164,6 @@ function ProductInfoTab({ product, onSaved }: { product: Product; onSaved: () =>
   );
 }
 
-// --- Computed Row type ---
-type ComputedRow = LedgerEntry & {
-  description: string;
-  inQty: number;
-  inPrice: number;
-  inAmount: number;
-  outQty: number;
-  outPrice: number;
-  outAmount: number;
-  balanceQty: number;
-  balanceAvgPrice: number;
-  balanceTotal: number;
-  overstock: boolean;
-};
-
-function computeWeightedAverage(entries: LedgerEntry[]): ComputedRow[] {
-  const sorted = [...entries].sort(
-    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
-  );
-
-  let balanceQty = 0;
-  let balanceTotal = 0;
-
-  return sorted.map((e) => {
-    const isInbound = e.type === "import" || e.type === "adjust_in";
-    const qty = Math.abs(e.quantity);
-    let inQty = 0, inPrice = 0, inAmount = 0;
-    let outQty = 0, outPrice = 0, outAmount = 0;
-    let overstock = false;
-
-    if (isInbound) {
-      inQty = qty;
-      inPrice = e.price;
-      inAmount = qty * e.price;
-      balanceQty += qty;
-      balanceTotal += inAmount;
-    } else {
-      outQty = qty;
-      if (outQty > balanceQty) overstock = true;
-      const avgPriceBefore = balanceQty > 0 ? balanceTotal / balanceQty : 0;
-      outPrice = Math.round(avgPriceBefore * 100) / 100;
-      outAmount = Math.round(outQty * outPrice);
-      balanceQty -= outQty;
-      balanceTotal -= outAmount;
-      if (balanceQty <= 0) { balanceQty = 0; balanceTotal = 0; }
-    }
-
-    const balanceAvgPrice = balanceQty > 0 ? Math.round((balanceTotal / balanceQty) * 100) / 100 : 0;
-
-    let description = "";
-    switch (e.type) {
-      case "import": description = `Nhập từ ${e.partnerName}`; break;
-      case "sale": description = `Bán cho ${e.partnerName}`; break;
-      case "adjust_in": description = e.note ? `Nhập điều chỉnh: ${e.note}` : "Nhập điều chỉnh"; break;
-      case "adjust_out": description = e.note ? `Xuất điều chỉnh: ${e.note}` : "Xuất điều chỉnh"; break;
-    }
-
-    return {
-      ...e,
-      description,
-      inQty, inPrice, inAmount,
-      outQty, outPrice, outAmount,
-      balanceQty,
-      balanceAvgPrice,
-      balanceTotal: Math.round(balanceTotal),
-      overstock,
-    };
-  });
-}
-
-// --- Stock Ledger Tab ---
-function StockLedgerTab({ product }: { product: Product }) {
-  const [entries, setEntries] = useState<LedgerEntry[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [adjType, setAdjType] = useState<"in" | "out">("in");
-  const [adjOpen, setAdjOpen] = useState(false);
-
-  const loadData = () => {
-    setLoading(true);
-    fetchStockLedger(product.id)
-      .then(setEntries)
-      .catch(() => setEntries([]))
-      .finally(() => setLoading(false));
-  };
-
-  useEffect(() => { loadData(); }, [product.id]);
-
-  const rows = useMemo(() => computeWeightedAverage(entries), [entries]);
-
-  const typeLabel = (type: string) => {
-    switch (type) {
-      case "import": return <Badge variant="outline" className="text-emerald-600 border-emerald-300">Nhập hàng</Badge>;
-      case "sale": return <Badge variant="outline" className="text-blue-600 border-blue-300">Xuất bán</Badge>;
-      case "adjust_in": return <Badge variant="outline" className="text-emerald-600 border-emerald-300">Nhập ĐC</Badge>;
-      case "adjust_out": return <Badge variant="outline" className="text-destructive border-destructive/30">Xuất ĐC</Badge>;
-      default: return type;
-    }
-  };
-
-  return (
-    <div className="pt-4 space-y-4">
-      {/* Action buttons */}
-      <div className="flex gap-2">
-        <Button
-          onClick={() => { setAdjType("in"); setAdjOpen(true); }}
-          className="bg-emerald-600 hover:bg-emerald-700"
-        >
-          <PackagePlus className="mr-2 h-4 w-4" /> Nhập kho
-        </Button>
-        <Button
-          variant="destructive"
-          onClick={() => { setAdjType("out"); setAdjOpen(true); }}
-        >
-          <PackageMinus className="mr-2 h-4 w-4" /> Xuất kho
-        </Button>
-      </div>
-
-      {/* Table */}
-      <div className="relative w-full overflow-auto max-h-[55vh] border rounded-md">
-        <Table>
-          <TableHeader className="sticky top-0 z-10 bg-muted/95 backdrop-blur-sm">
-            <TableRow>
-              <TableHead rowSpan={2} className="border-r align-middle min-w-[90px]">Ngày tháng</TableHead>
-              <TableHead rowSpan={2} className="border-r align-middle min-w-[90px]">Mã chứng từ</TableHead>
-              <TableHead rowSpan={2} className="border-r align-middle min-w-[70px]">Loại</TableHead>
-              <TableHead rowSpan={2} className="border-r align-middle min-w-[120px]">Diễn giải</TableHead>
-              <TableHead colSpan={3} className="text-center border-r border-b text-emerald-600">Nhập</TableHead>
-              <TableHead colSpan={3} className="text-center border-r border-b text-blue-600">Xuất</TableHead>
-              <TableHead colSpan={3} className="text-center border-b text-foreground">Tồn kho</TableHead>
-            </TableRow>
-            <TableRow>
-              <TableHead className="text-right text-xs min-w-[50px]">SL</TableHead>
-              <TableHead className="text-right text-xs min-w-[70px]">Đơn giá</TableHead>
-              <TableHead className="text-right text-xs border-r min-w-[80px]">Thành tiền</TableHead>
-              <TableHead className="text-right text-xs min-w-[50px]">SL</TableHead>
-              <TableHead className="text-right text-xs min-w-[70px]">Đơn giá</TableHead>
-              <TableHead className="text-right text-xs border-r min-w-[80px]">Thành tiền</TableHead>
-              <TableHead className="text-right text-xs min-w-[50px]">SL</TableHead>
-              <TableHead className="text-right text-xs min-w-[70px]">ĐG BQ</TableHead>
-              <TableHead className="text-right text-xs min-w-[90px]">Tổng GT</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {loading ? (
-              Array.from({ length: 4 }).map((_, i) => (
-                <TableRow key={i}>
-                  {Array.from({ length: 13 }).map((_, j) => (
-                    <TableCell key={j}><Skeleton className="h-4 w-full" /></TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : rows.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={13} className="text-center text-muted-foreground py-8">
-                  Chưa có giao dịch nào
-                </TableCell>
-              </TableRow>
-            ) : (
-              rows.map((r) => (
-                <TableRow key={r.id} className={r.overstock ? "bg-destructive/10" : ""}>
-                  <TableCell className="whitespace-nowrap text-xs border-r">
-                    {r.date ? format(new Date(r.date), "dd/MM/yyyy") : "—"}
-                  </TableCell>
-                  <TableCell className="font-mono text-xs border-r">{r.code}</TableCell>
-                  <TableCell className="text-xs border-r">{typeLabel(r.type)}</TableCell>
-                  <TableCell className="text-xs border-r truncate max-w-[140px]" title={r.description}>{r.description}</TableCell>
-                  <TableCell className="text-right text-xs text-emerald-600 font-medium">
-                    {r.inQty > 0 ? r.inQty : ""}
-                  </TableCell>
-                  <TableCell className="text-right text-xs">
-                    {r.inQty > 0 ? formatVND(r.inPrice) : ""}
-                  </TableCell>
-                  <TableCell className="text-right text-xs border-r font-medium">
-                    {r.inQty > 0 ? formatVND(r.inAmount) : ""}
-                  </TableCell>
-                  <TableCell className="text-right text-xs text-blue-600 font-medium">
-                    {r.outQty > 0 ? r.outQty : ""}
-                  </TableCell>
-                  <TableCell className="text-right text-xs">
-                    {r.outQty > 0 ? formatVND(r.outPrice) : ""}
-                  </TableCell>
-                  <TableCell className="text-right text-xs border-r font-medium">
-                    {r.outQty > 0 ? formatVND(r.outAmount) : ""}
-                  </TableCell>
-                  <TableCell className={`text-right text-xs font-bold ${r.overstock ? "text-destructive" : ""}`}>
-                    {r.balanceQty}
-                  </TableCell>
-                  <TableCell className="text-right text-xs">
-                    {formatVND(r.balanceAvgPrice)}
-                  </TableCell>
-                  <TableCell className="text-right text-xs font-medium">
-                    {formatVND(r.balanceTotal)}
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
-
-      <StockAdjustmentModal
-        open={adjOpen}
-        onOpenChange={(v) => { setAdjOpen(v); if (!v) loadData(); }}
-        productId={product.id}
-        productName={product.name}
-        type={adjType}
-        currentStock={product.stock_quantity}
-      />
-    </div>
-  );
-}
-
-// --- Main Sheet ---
 export function StockLedgerSheet({ open, onOpenChange, product }: Props) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
