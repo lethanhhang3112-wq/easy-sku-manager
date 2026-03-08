@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AppLayout } from "@/components/AppLayout";
 import Index from "./pages/Index";
 import SalesPage from "./pages/SalesPage";
+import SalesPOSPage from "./pages/SalesPOSPage";
 import ImportsPage from "./pages/ImportsPage";
 import CreateImportPage from "./pages/CreateImportPage";
 import ProductsPage from "./pages/ProductsPage";
@@ -28,6 +29,7 @@ const App = () => (
           <Route element={<AppLayout />}>
             <Route path="/" element={<Index />} />
             <Route path="/sales" element={<SalesPage />} />
+            <Route path="/sales/new" element={<SalesPOSPage />} />
             <Route path="/imports" element={<ImportsPage />} />
             <Route path="/imports/create" element={<CreateImportPage />} />
             <Route path="/products" element={<ProductsPage />} />
