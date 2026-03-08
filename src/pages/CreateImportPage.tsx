@@ -73,6 +73,11 @@ const CreateImportPage = () => {
   const [alreadyPaid, setAlreadyPaid] = useState(0);
   const [payingAmount, setPayingAmount] = useState(0);
   const [notes, setNotes] = useState("");
+  const [importDate, setImportDate] = useState(() => {
+    const now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    return now.toISOString().slice(0, 16);
+  });
   const [cart, setCart] = useState<CartItem[]>(DUMMY_ITEMS);
   const [searchTerm, setSearchTerm] = useState("");
   const [searchFocused, setSearchFocused] = useState(false);
