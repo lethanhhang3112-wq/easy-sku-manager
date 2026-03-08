@@ -1,0 +1,1 @@
+ALTER TABLE public.sales_orders ADD COLUMN status text NOT NULL DEFAULT 'completed';
