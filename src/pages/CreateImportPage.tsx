@@ -241,33 +241,13 @@ const CreateImportPage = () => {
               <h1 className="text-xl font-bold text-foreground">Nhập hàng</h1>
             </div>
             <div className="flex gap-2">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Tìm hàng hóa theo tên, mã hàng (F3)..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  onFocus={() => setSearchFocused(true)}
-                  onBlur={() => setTimeout(() => setSearchFocused(false), 200)}
-                  className="pl-10 h-9"
-                />
-                {searchFocused && filteredProducts.length > 0 && (
-                  <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-popover border rounded-md shadow-lg max-h-60 overflow-y-auto">
-                    {filteredProducts.map((p) => (
-                      <button
-                        key={p.id}
-                        className="w-full px-3 py-2 text-left hover:bg-accent flex items-center gap-3 border-b border-border/40 last:border-b-0 text-sm"
-                        onMouseDown={() => addToCart(p)}
-                      >
-                        <span className="font-mono text-xs text-muted-foreground">{p.code}</span>
-                        <span className="flex-1">{p.name}</span>
-                        <span className="text-xs text-muted-foreground">Tồn: {p.stock_quantity}</span>
-                        <span className="font-medium">{fmt(p.cost_price)}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
+              <ProductSearchDropdown
+                onSelect={(p) => addToCart(p)}
+                excludeIds={cart.map((c) => c.product_id)}
+                displayPrice="cost_price"
+                placeholder="Tìm hàng hóa theo tên, mã hàng (F3)..."
+                className="flex-1"
+              />
               <Button size="icon" variant="outline" className="h-9 w-9 shrink-0" onClick={() => setAddProductOpen(true)}>
                 <Plus className="h-4 w-4" />
               </Button>
