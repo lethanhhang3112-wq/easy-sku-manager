@@ -191,7 +191,7 @@ const CreateImportPage = () => {
         .select().single();
       if (orderError) throw orderError;
 
-      const items = realCart.map((c) => ({ import_order_id: order.id, product_id: c.product_id, quantity: c.quantity, unit_cost: c.unit_cost }));
+      const items = cart.map((c) => ({ import_order_id: order.id, product_id: c.product_id, quantity: c.quantity, unit_cost: c.unit_cost }));
       const { error: itemsError } = await supabase.from("import_order_items").insert(items);
       if (itemsError) throw itemsError;
 
@@ -199,12 +199,12 @@ const CreateImportPage = () => {
       const { data: latestProducts, error: fetchErr } = await supabase
         .from("products")
         .select("id, stock_quantity")
-        .in("id", realCart.map((c) => c.product_id));
+        .in("id", cart.map((c) => c.product_id));
       if (fetchErr) throw fetchErr;
 
       const stockMap = new Map((latestProducts || []).map((p) => [p.id, p.stock_quantity]));
 
-      await Promise.all(realCart.map(async (item) => {
+      await Promise.all(cart.map(async (item) => {
         const currentStock = stockMap.get(item.product_id) ?? 0;
         const { error } = await supabase.from("products").update({ stock_quantity: currentStock + item.quantity, cost_price: item.unit_cost }).eq("id", item.product_id);
         if (error) throw error;
