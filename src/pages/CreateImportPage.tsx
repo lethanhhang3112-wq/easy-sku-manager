@@ -20,7 +20,7 @@ import {
   Popover, PopoverContent, PopoverTrigger,
 } from "@/components/ui/popover";
 import { toast } from "sonner";
-import { Search, Plus, X, ChevronsUpDown, Check, PenLine } from "lucide-react";
+import { Search, Plus, X, ChevronsUpDown, Check, PenLine, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // ─── Types ───────────────────────────────────────────────────────
@@ -191,7 +191,7 @@ const CreateImportPage = () => {
     onError: (e: any) => toast.error(e.message),
   });
 
-  const saveDraft = () => toast.info("Đã lưu tạm phiếu nhập");
+  
 
   // ═══════════════════════════════════════════════════════════════
   // KiotViet-style inline input: no border, just a subtle bottom line
@@ -209,7 +209,12 @@ const CreateImportPage = () => {
 
           {/* Title + Search */}
           <div className="px-5 pt-5 pb-3 space-y-3 border-b bg-card">
-            <h1 className="text-xl font-bold text-foreground">Nhập hàng</h1>
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="icon" className="h-8 w-8 -ml-1" onClick={() => navigate("/imports")}>
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+              <h1 className="text-xl font-bold text-foreground">Nhập hàng</h1>
+            </div>
             <div className="flex gap-2">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -461,25 +466,9 @@ const CreateImportPage = () => {
           </div>
 
           {/* Action Buttons — bottom-pinned */}
-          <div className="px-4 py-3 border-t bg-card flex items-center gap-2">
+          <div className="px-4 py-3 border-t bg-card">
             <Button
-              variant="outline"
-              size="sm"
-              className="flex-1 h-9 text-xs"
-              onClick={() => navigate("/imports")}
-            >
-              Trở về
-            </Button>
-            <Button
-              size="sm"
-              className="flex-1 h-9 text-xs bg-primary hover:bg-primary/90"
-              onClick={saveDraft}
-            >
-              Lưu tạm
-            </Button>
-            <Button
-              size="sm"
-              className="flex-1 h-9 text-xs bg-[hsl(142,72%,40%)] hover:bg-[hsl(142,72%,35%)] text-[hsl(0,0%,100%)]"
+              className="w-full h-10 text-sm font-bold bg-[hsl(142,72%,40%)] hover:bg-[hsl(142,72%,35%)] text-[hsl(0,0%,100%)]"
               onClick={() => submitMutation.mutate()}
               disabled={cart.length === 0 || submitMutation.isPending}
             >
