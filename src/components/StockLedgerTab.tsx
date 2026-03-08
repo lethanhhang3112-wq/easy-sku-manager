@@ -117,32 +117,36 @@ async function fetchStockLedger(productId: string): Promise<LedgerEntry[]> {
 
 // --- Weighted average calculation ---
 function computeWeightedAverage(entries: LedgerEntry[]): ComputedRow[] {
-  let balanceQty = 0;
-  let balanceTotal = 0;
+  let runningQty = 0;
+  let runningMAC = 0;
 
   return entries.map((e) => {
     const isInbound = e.type === "import" || e.type === "adjust_in";
     const qty = Math.abs(e.quantity);
     let inQty = 0, outQty = 0;
+    let transactionPrice = 0;
     let transactionValue = 0;
     let overstock = false;
 
     if (isInbound) {
       inQty = qty;
+      transactionPrice = e.price;
       transactionValue = qty * e.price;
-      balanceQty += qty;
-      balanceTotal += transactionValue;
+      // MAC formula: New MAC = ((Current Qty * Current MAC) + (Import Qty * Import Price)) / (Current Qty + Import Qty)
+      const newTotalQty = runningQty + qty;
+      if (newTotalQty > 0) {
+        runningMAC = ((runningQty * runningMAC) + (qty * e.price)) / newTotalQty;
+      }
+      runningQty = newTotalQty;
     } else {
       outQty = qty;
-      if (outQty > balanceQty) overstock = true;
-      const avgPriceBefore = balanceQty > 0 ? balanceTotal / balanceQty : 0;
-      transactionValue = Math.round(outQty * avgPriceBefore);
-      balanceQty -= outQty;
-      balanceTotal -= transactionValue;
-      if (balanceQty <= 0) { balanceQty = 0; balanceTotal = 0; }
+      if (outQty > runningQty) overstock = true;
+      // Sale uses current MAC as transaction price; MAC remains unchanged
+      transactionPrice = Math.round(runningMAC * 100) / 100;
+      transactionValue = Math.round(outQty * runningMAC);
+      runningQty -= outQty;
+      if (runningQty <= 0) { runningQty = 0; runningMAC = 0; }
     }
-
-    const balanceAvgPrice = balanceQty > 0 ? Math.round((balanceTotal / balanceQty) * 100) / 100 : 0;
 
     let description = "";
     switch (e.type) {
@@ -156,10 +160,11 @@ function computeWeightedAverage(entries: LedgerEntry[]): ComputedRow[] {
       ...e,
       description,
       inQty, outQty,
+      transactionPrice,
       transactionValue,
-      balanceQty,
-      balanceAvgPrice,
-      balanceTotal: Math.round(balanceTotal),
+      balanceQty: runningQty,
+      balanceMAC: Math.round(runningMAC * 100) / 100,
+      balanceTotal: Math.round(runningQty * runningMAC),
       overstock,
     };
   });
