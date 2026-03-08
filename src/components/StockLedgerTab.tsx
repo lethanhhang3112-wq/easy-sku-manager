@@ -47,9 +47,10 @@ type ComputedRow = LedgerEntry & {
   description: string;
   inQty: number;
   outQty: number;
+  transactionPrice: number;
   transactionValue: number;
   balanceQty: number;
-  balanceAvgPrice: number;
+  balanceMAC: number;
   balanceTotal: number;
   overstock: boolean;
 };
@@ -116,32 +117,36 @@ async function fetchStockLedger(productId: string): Promise<LedgerEntry[]> {
 
 // --- Weighted average calculation ---
 function computeWeightedAverage(entries: LedgerEntry[]): ComputedRow[] {
-  let balanceQty = 0;
-  let balanceTotal = 0;
+  let runningQty = 0;
+  let runningMAC = 0;
 
   return entries.map((e) => {
     const isInbound = e.type === "import" || e.type === "adjust_in";
     const qty = Math.abs(e.quantity);
     let inQty = 0, outQty = 0;
+    let transactionPrice = 0;
     let transactionValue = 0;
     let overstock = false;
 
     if (isInbound) {
       inQty = qty;
+      transactionPrice = e.price;
       transactionValue = qty * e.price;
-      balanceQty += qty;
-      balanceTotal += transactionValue;
+      // MAC formula: New MAC = ((Current Qty * Current MAC) + (Import Qty * Import Price)) / (Current Qty + Import Qty)
+      const newTotalQty = runningQty + qty;
+      if (newTotalQty > 0) {
+        runningMAC = ((runningQty * runningMAC) + (qty * e.price)) / newTotalQty;
+      }
+      runningQty = newTotalQty;
     } else {
       outQty = qty;
-      if (outQty > balanceQty) overstock = true;
-      const avgPriceBefore = balanceQty > 0 ? balanceTotal / balanceQty : 0;
-      transactionValue = Math.round(outQty * avgPriceBefore);
-      balanceQty -= outQty;
-      balanceTotal -= transactionValue;
-      if (balanceQty <= 0) { balanceQty = 0; balanceTotal = 0; }
+      if (outQty > runningQty) overstock = true;
+      // Sale uses current MAC as transaction price; MAC remains unchanged
+      transactionPrice = Math.round(runningMAC * 100) / 100;
+      transactionValue = Math.round(outQty * runningMAC);
+      runningQty -= outQty;
+      if (runningQty <= 0) { runningQty = 0; runningMAC = 0; }
     }
-
-    const balanceAvgPrice = balanceQty > 0 ? Math.round((balanceTotal / balanceQty) * 100) / 100 : 0;
 
     let description = "";
     switch (e.type) {
@@ -155,10 +160,11 @@ function computeWeightedAverage(entries: LedgerEntry[]): ComputedRow[] {
       ...e,
       description,
       inQty, outQty,
+      transactionPrice,
       transactionValue,
-      balanceQty,
-      balanceAvgPrice,
-      balanceTotal: Math.round(balanceTotal),
+      balanceQty: runningQty,
+      balanceMAC: Math.round(runningMAC * 100) / 100,
+      balanceTotal: Math.round(runningQty * runningMAC),
       overstock,
     };
   });
@@ -210,6 +216,10 @@ function MobileCard({ row }: { row: ComputedRow }) {
       </div>
       <div className="flex items-center justify-between text-xs text-muted-foreground">
         <span>{row.date ? format(new Date(row.date), "dd/MM/yyyy HH:mm") : "—"}</span>
+        <span>Giá GD: {formatVND(row.transactionPrice)}</span>
+      </div>
+      <div className="flex items-center justify-between text-xs text-muted-foreground">
+        <span>{row.partnerName || "—"}</span>
         <span>GT: {formatVND(row.transactionValue)}</span>
       </div>
     </div>
@@ -395,26 +405,27 @@ export function StockLedgerTab({ product }: { product: Product }) {
           <TableHeader className="sticky top-0 z-10 bg-muted/95 backdrop-blur-sm">
             <TableRow>
               <TableHead className="min-w-[110px]">Thời gian</TableHead>
-              <TableHead className="min-w-[90px]">Mã chứng từ</TableHead>
+              <TableHead className="min-w-[90px]">Mã phiếu</TableHead>
               <TableHead className="min-w-[80px]">Loại</TableHead>
-              <TableHead className="text-right min-w-[60px]">Số lượng</TableHead>
-              <TableHead className="text-right min-w-[80px]">Đơn giá</TableHead>
+              <TableHead className="min-w-[100px]">Đối tác</TableHead>
+              <TableHead className="text-right min-w-[60px]">SL thay đổi</TableHead>
+              <TableHead className="text-right min-w-[70px]">Tồn cuối</TableHead>
+              <TableHead className="text-right min-w-[90px]">Giá giao dịch</TableHead>
               <TableHead className="text-right min-w-[90px]">Giá trị GD</TableHead>
-              <TableHead className="text-right min-w-[70px]">Tồn kho</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading ? (
               Array.from({ length: 5 }).map((_, i) => (
                 <TableRow key={i}>
-                  {Array.from({ length: 7 }).map((_, j) => (
+                  {Array.from({ length: 8 }).map((_, j) => (
                     <TableCell key={j}><Skeleton className="h-4 w-full" /></TableCell>
                   ))}
                 </TableRow>
               ))
             ) : pagedRows.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                   {hasFilters ? "Không có giao dịch phù hợp bộ lọc" : "Chưa có giao dịch nào"}
                 </TableCell>
               </TableRow>
@@ -426,14 +437,15 @@ export function StockLedgerTab({ product }: { product: Product }) {
                   </TableCell>
                   <TableCell className="font-mono text-xs text-primary">{r.code}</TableCell>
                   <TableCell><TypeBadge type={r.type} /></TableCell>
+                  <TableCell className="text-xs truncate max-w-[120px]">{r.partnerName || "—"}</TableCell>
                   <TableCell className="text-right text-sm">
                     <QtyDisplay row={r} />
                   </TableCell>
-                  <TableCell className="text-right text-xs">{formatVND(r.price)}</TableCell>
-                  <TableCell className="text-right text-xs font-medium">{formatVND(r.transactionValue)}</TableCell>
                   <TableCell className={cn("text-right text-sm font-bold", r.overstock && "text-destructive")}>
                     {r.balanceQty}
                   </TableCell>
+                  <TableCell className="text-right text-xs">{formatVND(r.transactionPrice)}</TableCell>
+                  <TableCell className="text-right text-xs font-medium">{formatVND(r.transactionValue)}</TableCell>
                 </TableRow>
               ))
             )}
