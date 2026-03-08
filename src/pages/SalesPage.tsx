@@ -148,6 +148,7 @@ const SalesPage = () => {
   const [discount, setDiscount] = useState(0);
   const [amountPaid, setAmountPaid] = useState(0);
   const [amountPaidManual, setAmountPaidManual] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'transfer'>('cash');
   const [invoiceCode, setInvoiceCode] = useState("Đang tạo...");
 
   // Generate code on mount
