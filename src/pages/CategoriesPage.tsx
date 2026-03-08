@@ -11,8 +11,13 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  Sheet, SheetContent, SheetHeader, SheetTitle,
+} from "@/components/ui/sheet";
+import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2 } from "lucide-react";
+import { formatCurrency } from "@/components/CurrencyInput";
 
 type Category = {
   id: string;
@@ -27,6 +32,7 @@ const CategoriesPage = () => {
   const [editing, setEditing] = useState<Category | null>(null);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
 
   const { data: categories = [], isLoading } = useQuery({
     queryKey: ["categories"],
@@ -38,6 +44,20 @@ const CategoriesPage = () => {
       if (error) throw error;
       return data as Category[];
     },
+  });
+
+  const { data: categoryProducts = [], isLoading: productsLoading } = useQuery({
+    queryKey: ["category-products", selectedCategory?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("products")
+        .select("id, code, name, sale_price, stock_quantity")
+        .eq("category_id", selectedCategory!.id)
+        .order("name");
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!selectedCategory,
   });
 
   const saveMutation = useMutation({
@@ -119,11 +139,15 @@ const CategoriesPage = () => {
               <TableRow><TableCell colSpan={3} className="text-center text-muted-foreground">Chưa có nhóm sản phẩm nào</TableCell></TableRow>
             ) : (
               categories.map((cat) => (
-                <TableRow key={cat.id}>
+                <TableRow
+                  key={cat.id}
+                  className="cursor-pointer"
+                  onClick={() => setSelectedCategory(cat)}
+                >
                   <TableCell className="font-medium">{cat.name}</TableCell>
                   <TableCell className="text-muted-foreground">{cat.description || "—"}</TableCell>
                   <TableCell>
-                    <div className="flex gap-1">
+                    <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
                       <Button variant="ghost" size="icon" onClick={() => openEdit(cat)}>
                         <Pencil className="h-4 w-4" />
                       </Button>
@@ -139,6 +163,7 @@ const CategoriesPage = () => {
         </Table>
       </div>
 
+      {/* Add/Edit Dialog */}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader>
@@ -162,6 +187,45 @@ const CategoriesPage = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Category Products Sheet */}
+      <Sheet open={!!selectedCategory} onOpenChange={(o) => { if (!o) setSelectedCategory(null); }}>
+        <SheetContent className="sm:max-w-lg">
+          <SheetHeader>
+            <SheetTitle>Sản phẩm trong nhóm: {selectedCategory?.name}</SheetTitle>
+          </SheetHeader>
+          <div className="mt-4">
+            {productsLoading ? (
+              <div className="space-y-3">
+                {[1, 2, 3].map((i) => <Skeleton key={i} className="h-10 w-full" />)}
+              </div>
+            ) : categoryProducts.length === 0 ? (
+              <p className="text-center text-muted-foreground py-8">Chưa có sản phẩm nào trong nhóm này.</p>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Mã hàng</TableHead>
+                    <TableHead>Tên hàng</TableHead>
+                    <TableHead className="text-right">Giá bán</TableHead>
+                    <TableHead className="text-right">Tồn kho</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {categoryProducts.map((p) => (
+                    <TableRow key={p.id}>
+                      <TableCell className="font-mono text-xs">{p.code}</TableCell>
+                      <TableCell>{p.name}</TableCell>
+                      <TableCell className="text-right">{formatCurrency(p.sale_price)}</TableCell>
+                      <TableCell className="text-right">{p.stock_quantity}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 };
