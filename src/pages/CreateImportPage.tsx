@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -64,10 +64,13 @@ const DUMMY_ITEMS: CartItem[] = [];
 // ═════════════════════════════════════════════════════════════════
 const CreateImportPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const queryClient = useQueryClient();
 
+  const prefill = location.state as { prefillCart?: CartItem[]; prefillSupplierId?: string | null } | null;
+
   const [code, setCode] = useState("");
-  const [supplierId, setSupplierId] = useState("");
+  const [supplierId, setSupplierId] = useState(prefill?.prefillSupplierId || "");
   const [supplierOpen, setSupplierOpen] = useState(false);
   const [globalDiscount, setGlobalDiscount] = useState(0);
   const [alreadyPaid, setAlreadyPaid] = useState(0);
@@ -78,7 +81,7 @@ const CreateImportPage = () => {
     now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
     return now.toISOString().slice(0, 16);
   });
-  const [cart, setCart] = useState<CartItem[]>(DUMMY_ITEMS);
+  const [cart, setCart] = useState<CartItem[]>(prefill?.prefillCart || DUMMY_ITEMS);
   
 
   const [addSupplierOpen, setAddSupplierOpen] = useState(false);
