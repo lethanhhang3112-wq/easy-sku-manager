@@ -14,6 +14,10 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { Plus, Trash2, Eye } from "lucide-react";
 
@@ -70,6 +74,7 @@ const ImportsPage = () => {
   const [supplierId, setSupplierId] = useState("");
   const [cart, setCart] = useState<CartItem[]>([]);
   const [selectedProduct, setSelectedProduct] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<ImportOrder | null>(null);
 
   const { data: importOrders = [], isLoading } = useQuery({
     queryKey: ["import_orders"],
@@ -100,8 +105,6 @@ const ImportsPage = () => {
       return data as Product[];
     },
   });
-
-  
 
   const totalAmount = cart.reduce((sum, item) => sum + item.quantity * item.unit_cost, 0);
 
@@ -136,7 +139,6 @@ const ImportsPage = () => {
     mutationFn: async () => {
       if (cart.length === 0) throw new Error("Chưa có sản phẩm nào trong phiếu nhập");
 
-      // 1. Create import order
       const { data: order, error: orderError } = await supabase
         .from("import_orders")
         .insert({ code, supplier_id: supplierId || null, total_amount: totalAmount })
@@ -144,7 +146,6 @@ const ImportsPage = () => {
         .single();
       if (orderError) throw orderError;
 
-      // 2. Create import order items
       const items = cart.map((c) => ({
         import_order_id: order.id,
         product_id: c.product_id,
@@ -154,7 +155,6 @@ const ImportsPage = () => {
       const { error: itemsError } = await supabase.from("import_order_items").insert(items);
       if (itemsError) throw itemsError;
 
-      // 3. Update stock quantities
       for (const item of cart) {
         const product = products.find((p) => p.id === item.product_id);
         if (product) {
@@ -172,6 +172,56 @@ const ImportsPage = () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
       toast.success("Đã tạo phiếu nhập hàng thành công");
       closeDialog();
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const deleteImportMutation = useMutation({
+    mutationFn: async (orderId: string) => {
+      // Step A: Fetch items
+      const { data: items, error: itemsErr } = await supabase
+        .from("import_order_items")
+        .select("product_id, quantity")
+        .eq("import_order_id", orderId);
+      if (itemsErr) throw itemsErr;
+
+      // Step B: Deduct inventory
+      if (items && items.length > 0) {
+        for (const item of items) {
+          const { data: product } = await supabase
+            .from("products")
+            .select("stock_quantity")
+            .eq("id", item.product_id)
+            .single();
+          if (product) {
+            const newQty = product.stock_quantity - item.quantity;
+            const { error } = await supabase
+              .from("products")
+              .update({ stock_quantity: newQty })
+              .eq("id", item.product_id);
+            if (error) throw error;
+          }
+        }
+      }
+
+      // Step C: Delete items first, then order
+      const { error: delItemsErr } = await supabase
+        .from("import_order_items")
+        .delete()
+        .eq("import_order_id", orderId);
+      if (delItemsErr) throw delItemsErr;
+
+      const { error: delErr } = await supabase
+        .from("import_orders")
+        .delete()
+        .eq("id", orderId);
+      if (delErr) throw delErr;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["import_orders"] });
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      toast.success("Đã hủy phiếu nhập và trừ tồn kho thành công");
+      setDeleteTarget(null);
     },
     onError: (e: any) => toast.error(e.message),
   });
@@ -215,7 +265,7 @@ const ImportsPage = () => {
               <TableHead>Nhà cung cấp</TableHead>
               <TableHead className="text-right">Tổng tiền</TableHead>
               <TableHead>Ngày tạo</TableHead>
-              <TableHead className="w-[80px]">Xem</TableHead>
+              <TableHead className="w-[100px]">Thao tác</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -231,9 +281,19 @@ const ImportsPage = () => {
                   <TableCell className="text-right">{formatVND(o.total_amount)}</TableCell>
                   <TableCell className="text-muted-foreground">{new Date(o.created_at).toLocaleDateString("vi-VN")}</TableCell>
                   <TableCell>
-                    <Button variant="ghost" size="icon" onClick={() => viewDetail(o)}>
-                      <Eye className="h-4 w-4" />
-                    </Button>
+                    <div className="flex gap-1">
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => viewDetail(o)}>
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                        onClick={() => setDeleteTarget(o)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))
@@ -241,6 +301,28 @@ const ImportsPage = () => {
           </TableBody>
         </Table>
       </div>
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Hủy phiếu nhập {deleteTarget?.code}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bạn có chắc chắn muốn hủy phiếu này? Thao tác này sẽ hoàn tác số lượng tồn kho và không thể khôi phục.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteImportMutation.isPending}>Không</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={deleteImportMutation.isPending}
+              onClick={() => deleteTarget && deleteImportMutation.mutate(deleteTarget.id)}
+            >
+              {deleteImportMutation.isPending ? "Đang xử lý..." : "Xác nhận hủy"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Create Import Order Dialog */}
       <Dialog open={open} onOpenChange={setOpen}>
@@ -269,7 +351,6 @@ const ImportsPage = () => {
               </div>
             </div>
 
-            {/* Add product to cart */}
             <div>
               <Label>Thêm sản phẩm</Label>
               <Select value={selectedProduct} onValueChange={addToCart}>
@@ -284,7 +365,6 @@ const ImportsPage = () => {
               </Select>
             </div>
 
-            {/* Cart table */}
             {cart.length > 0 && (
               <div className="border rounded-lg">
                 <Table>
