@@ -51,7 +51,13 @@ const ProductsPage = () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
       toast.success("Đã xóa sản phẩm");
     },
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: any) => {
+      if (e.message?.includes("violates foreign key constraint")) {
+        toast.error("Không thể xóa sản phẩm đã có trong đơn nhập/bán hàng");
+      } else {
+        toast.error(e.message);
+      }
+    },
   });
 
   const filtered = useMemo(() => {
