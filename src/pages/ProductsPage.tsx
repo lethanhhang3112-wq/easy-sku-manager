@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2 } from "lucide-react";
+import { AddProductModal } from "@/components/AddProductModal";
 
 type Product = {
   id: string;
