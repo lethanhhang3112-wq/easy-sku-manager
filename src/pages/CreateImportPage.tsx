@@ -189,6 +189,45 @@ const CreateImportPage = () => {
     onError: (e: any) => toast.error(e.message),
   });
 
+  const addProductMutation = useMutation({
+    mutationFn: async () => {
+      if (!newProductName.trim()) throw new Error("Tên hàng hóa không được để trống");
+      let productCode = newProductCode.trim();
+      if (!productCode) {
+        const { data: existing } = await supabase.from("products").select("code").order("code", { ascending: false }).limit(1);
+        let nextNum = 1;
+        if (existing && existing.length > 0) {
+          const parsed = parseInt(existing[0].code, 10);
+          if (!isNaN(parsed)) nextNum = parsed + 1;
+        }
+        productCode = String(nextNum).padStart(6, "0");
+      }
+      const { data, error } = await supabase.from("products").insert({
+        code: productCode,
+        name: newProductName.trim(),
+        category_id: newProductCategoryId || null,
+        cost_price: newProductCostPrice,
+        sale_price: newProductSalePrice,
+        stock_quantity: 0,
+      }).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      refetchProducts();
+      setAddProductOpen(false);
+      setNewProductCode(""); setNewProductName(""); setNewProductCategoryId("");
+      setNewProductCostPrice(0); setNewProductSalePrice(0);
+      toast.success("Đã thêm hàng hóa mới");
+      // Add to cart immediately
+      setCart((prev) => [...prev, {
+        product_id: data.id, product_code: data.code, product_name: data.name,
+        quantity: 1, unit_cost: data.cost_price, item_discount: 0,
+      }]);
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
   const submitMutation = useMutation({
     mutationFn: async () => {
       const realCart = cart.filter((c) => !c.product_id.startsWith("dummy-"));
