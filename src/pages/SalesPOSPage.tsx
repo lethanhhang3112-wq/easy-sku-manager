@@ -335,6 +335,8 @@ const SalesPage = () => {
       setAmountPaid(0);
       setAmountPaidManual(false);
       setPaymentMethod('cash');
+      const now = new Date(); now.setSeconds(0, 0);
+      setOrderDate(now);
       setInvoiceCode(await generateSalesCode());
       // Focus search input for next order
       setTimeout(() => searchRef.current?.focus(), 100);
