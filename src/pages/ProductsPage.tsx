@@ -55,6 +55,7 @@ const formatVND = (n: number) =>
 const ProductsPage = () => {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
+  const [addModalOpen, setAddModalOpen] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
   const [code, setCode] = useState("");
   const [name, setName] = useState("");
