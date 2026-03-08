@@ -561,6 +561,20 @@ const SalesPage = () => {
             <span className="font-semibold text-success">{fmt(effectiveChange)}</span>
           </div>
 
+          <div className="border-t pt-3">
+            <Label className="text-sm text-muted-foreground mb-2 block">Phương thức thanh toán</Label>
+            <RadioGroup value={paymentMethod} onValueChange={(v) => setPaymentMethod(v as 'cash' | 'transfer')}>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="cash" id="cash" />
+                <Label htmlFor="cash" className="font-normal cursor-pointer text-sm">Tiền mặt</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="transfer" id="transfer" />
+                <Label htmlFor="transfer" className="font-normal cursor-pointer text-sm">Chuyển khoản</Label>
+              </div>
+            </RadioGroup>
+          </div>
+
           <div className="flex-1" />
 
           {/* Checkout button */}
