@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,6 +20,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { Plus, Trash2, Eye } from "lucide-react";
+import ImportFilterBar, { type FilterState } from "@/components/ImportFilterBar";
+import { useDebounce } from "@/hooks/use-debounce";
+import { startOfDay, endOfDay } from "date-fns";
 
 type Supplier = { id: string; code: string; name: string };
 type Product = { id: string; code: string; name: string; cost_price: number; stock_quantity: number };
@@ -75,6 +78,10 @@ const ImportsPage = () => {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [selectedProduct, setSelectedProduct] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<ImportOrder | null>(null);
+  const [filters, setFilters] = useState<FilterState>({
+    searchQuery: "", startDate: undefined, endDate: undefined, quickFilter: "",
+  });
+  const debouncedSearch = useDebounce(filters.searchQuery, 300);
 
   const { data: importOrders = [], isLoading } = useQuery({
     queryKey: ["import_orders"],
@@ -105,6 +112,26 @@ const ImportsPage = () => {
       return data as Product[];
     },
   });
+
+  const filteredOrders = useMemo(() => {
+    let result = importOrders;
+    if (debouncedSearch) {
+      const q = debouncedSearch.toLowerCase();
+      result = result.filter((o) =>
+        o.code.toLowerCase().includes(q) ||
+        (o.suppliers?.name || "").toLowerCase().includes(q)
+      );
+    }
+    if (filters.startDate) {
+      const start = startOfDay(filters.startDate).toISOString();
+      result = result.filter((o) => o.created_at >= start);
+    }
+    if (filters.endDate) {
+      const end = endOfDay(filters.endDate).toISOString();
+      result = result.filter((o) => o.created_at <= end);
+    }
+    return result;
+  }, [importOrders, debouncedSearch, filters.startDate, filters.endDate]);
 
   const totalAmount = cart.reduce((sum, item) => sum + item.quantity * item.unit_cost, 0);
 
@@ -257,6 +284,8 @@ const ImportsPage = () => {
         </Button>
       </div>
 
+      <ImportFilterBar filters={filters} onFiltersChange={setFilters} />
+
       <div className="bg-card rounded-lg border">
         <Table>
           <TableHeader>
@@ -271,10 +300,10 @@ const ImportsPage = () => {
           <TableBody>
             {isLoading ? (
               <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground">Đang tải...</TableCell></TableRow>
-            ) : importOrders.length === 0 ? (
-              <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground">Chưa có phiếu nhập nào</TableCell></TableRow>
+            ) : filteredOrders.length === 0 ? (
+              <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground">Không tìm thấy phiếu nhập nào</TableCell></TableRow>
             ) : (
-              importOrders.map((o) => (
+              filteredOrders.map((o) => (
                 <TableRow key={o.id}>
                   <TableCell className="font-mono">{o.code}</TableCell>
                   <TableCell>{o.suppliers?.name || "—"}</TableCell>
