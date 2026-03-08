@@ -204,7 +204,7 @@ const SalesPage = () => {
       const product = products.find((p) => p.id === productId);
       if (!product) return;
       if (product.stock_quantity <= 0) {
-        toast.warning(`${product.name} đã hết hàng`);
+        toast.error("Sản phẩm này đã hết hàng!", { description: product.name });
         return;
       }
 
@@ -236,11 +236,16 @@ const SalesPage = () => {
 
   const updateQty = useCallback((productId: string, qty: number) => {
     setCart((prev) =>
-      prev.map((c) =>
-        c.product_id === productId
-          ? { ...c, quantity: Math.min(Math.max(1, qty), c.max_stock) }
-          : c
-      )
+      prev.map((c) => {
+        if (c.product_id !== productId) return c;
+        const clamped = Math.min(Math.max(1, qty), c.max_stock);
+        if (qty > c.max_stock) {
+          toast.warning("Số lượng vượt quá tồn kho hiện tại!", {
+            description: `${c.product_name}: tồn kho ${c.max_stock}`,
+          });
+        }
+        return { ...c, quantity: clamped };
+      })
     );
   }, []);
 
@@ -259,11 +264,20 @@ const SalesPage = () => {
     mutationFn: async () => {
       if (cart.length === 0) throw new Error("Chưa có sản phẩm nào trong giỏ hàng");
 
-      // Validate stock
+      // Fetch latest stock for all cart items to prevent race conditions
+      const { data: latestProducts, error: fetchErr } = await supabase
+        .from("products")
+        .select("id, stock_quantity")
+        .in("id", cart.map((c) => c.product_id));
+      if (fetchErr) throw fetchErr;
+
+      const stockMap = new Map((latestProducts || []).map((p) => [p.id, p.stock_quantity]));
+
+      // Validate stock against latest data
       for (const item of cart) {
-        const product = products.find((p) => p.id === item.product_id);
-        if (product && item.quantity > product.stock_quantity) {
-          throw new Error(`${item.product_name} chỉ còn ${product.stock_quantity} trong kho`);
+        const currentStock = stockMap.get(item.product_id) ?? 0;
+        if (item.quantity > currentStock) {
+          throw new Error(`${item.product_name} chỉ còn ${currentStock} trong kho`);
         }
       }
 
@@ -292,17 +306,15 @@ const SalesPage = () => {
       const { error: itemsError } = await supabase.from("sales_order_items").insert(items);
       if (itemsError) throw itemsError;
 
-      // Step C: Deduct stock
-      for (const item of cart) {
-        const product = products.find((p) => p.id === item.product_id);
-        if (product) {
-          const { error } = await supabase
-            .from("products")
-            .update({ stock_quantity: product.stock_quantity - item.quantity })
-            .eq("id", item.product_id);
-          if (error) throw error;
-        }
-      }
+      // Step C: Deduct stock using latest fetched values
+      await Promise.all(cart.map(async (item) => {
+        const currentStock = stockMap.get(item.product_id) ?? 0;
+        const { error } = await supabase
+          .from("products")
+          .update({ stock_quantity: currentStock - item.quantity })
+          .eq("id", item.product_id);
+        if (error) throw error;
+      }));
 
       return code;
     },

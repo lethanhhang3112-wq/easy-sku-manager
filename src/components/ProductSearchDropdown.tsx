@@ -5,6 +5,8 @@ import { useDebounce } from "@/hooks/use-debounce";
 import { Input } from "@/components/ui/input";
 import { Search, Loader2 } from "lucide-react";
 import { formatCurrency } from "@/components/CurrencyInput";
+import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 type ProductResult = {
   id: string;
@@ -123,21 +125,40 @@ export const ProductSearchDropdown = forwardRef<ProductSearchDropdownRef, Produc
               Không tìm thấy hàng hóa
             </div>
           ) : (
-            results.map((p) => (
-              <button
-                key={p.id}
-                className="w-full px-4 py-2.5 text-left hover:bg-accent flex items-center gap-3 text-sm border-b last:border-b-0 transition-colors"
-                onMouseDown={(e) => e.preventDefault()}
-                onClick={() => handleSelect(p)}
-              >
-                <span className="font-mono text-muted-foreground w-20 shrink-0">{p.code}</span>
-                <span className="flex-1 truncate">{p.name}</span>
-                <span className="text-muted-foreground text-xs">Tồn: {p.stock_quantity}</span>
-                <span className="font-medium text-primary w-28 text-right">
-                  {formatCurrency(p[displayPrice])}
-                </span>
-              </button>
-            ))
+            results.map((p) => {
+              const outOfStock = p.stock_quantity <= 0;
+              return (
+                <button
+                  key={p.id}
+                  className={cn(
+                    "w-full px-4 py-2.5 text-left flex items-center gap-3 text-sm border-b last:border-b-0 transition-colors",
+                    outOfStock
+                      ? "opacity-50 cursor-not-allowed bg-muted/30"
+                      : "hover:bg-accent"
+                  )}
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => {
+                    if (outOfStock) {
+                      toast.error("Sản phẩm này đã hết hàng!", { description: p.name });
+                      return;
+                    }
+                    handleSelect(p);
+                  }}
+                >
+                  <span className="font-mono text-muted-foreground w-20 shrink-0">{p.code}</span>
+                  <span className="flex-1 truncate">{p.name}</span>
+                  <span className={cn(
+                    "text-xs",
+                    outOfStock ? "text-destructive font-medium" : "text-muted-foreground"
+                  )}>
+                    Tồn: {p.stock_quantity}
+                  </span>
+                  <span className="font-medium text-primary w-28 text-right">
+                    {formatCurrency(p[displayPrice])}
+                  </span>
+                </button>
+              );
+            })
           )}
         </div>
       )}
