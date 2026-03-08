@@ -171,7 +171,7 @@ const CreateImportPage = () => {
 
       const { data: order, error: orderError } = await supabase
         .from("import_orders")
-        .insert({ code, supplier_id: supplierId || null, total_amount: totalAmount, discount: globalDiscount, amount_paid: payingAmount, notes: notes.trim() })
+        .insert({ code, supplier_id: supplierId || null, total_amount: totalAmount, discount: globalDiscount, amount_paid: payingAmount, notes: notes.trim(), created_at: new Date(importDate).toISOString() })
         .select().single();
       if (orderError) throw orderError;
 
