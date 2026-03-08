@@ -436,11 +436,9 @@ const CreateImportPage = () => {
               {/* Đã trả NCC */}
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">Đã trả nhà cung cấp</span>
-                <input
-                  type="number"
-                  min={0}
+                <CurrencyInput
                   value={alreadyPaid}
-                  onChange={(e) => setAlreadyPaid(parseFloat(e.target.value) || 0)}
+                  onChange={setAlreadyPaid}
                   className={cn(inlineInputClass, "w-[100px] text-right")}
                 />
               </div>
