@@ -134,6 +134,7 @@ function ProductInfoTab({ product, onSaved }: { product: Product; onSaved: () =>
           category_id: categoryId || null,
           cost_price: costPrice,
           sale_price: salePrice,
+          stock_quantity: stockQuantity,
         })
         .eq("id", product.id);
       if (error) throw error;
