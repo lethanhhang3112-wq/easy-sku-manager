@@ -228,6 +228,7 @@ export type Database = {
           created_at: string
           customer_id: string | null
           id: string
+          payment_method: string
           total_amount: number
         }
         Insert: {
@@ -235,6 +236,7 @@ export type Database = {
           created_at?: string
           customer_id?: string | null
           id?: string
+          payment_method?: string
           total_amount?: number
         }
         Update: {
@@ -242,6 +244,7 @@ export type Database = {
           created_at?: string
           customer_id?: string | null
           id?: string
+          payment_method?: string
           total_amount?: number
         }
         Relationships: [
