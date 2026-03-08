@@ -113,6 +113,26 @@ const ImportsPage = () => {
     },
   });
 
+  const filteredOrders = useMemo(() => {
+    let result = importOrders;
+    if (debouncedSearch) {
+      const q = debouncedSearch.toLowerCase();
+      result = result.filter((o) =>
+        o.code.toLowerCase().includes(q) ||
+        (o.suppliers?.name || "").toLowerCase().includes(q)
+      );
+    }
+    if (filters.startDate) {
+      const start = startOfDay(filters.startDate).toISOString();
+      result = result.filter((o) => o.created_at >= start);
+    }
+    if (filters.endDate) {
+      const end = endOfDay(filters.endDate).toISOString();
+      result = result.filter((o) => o.created_at <= end);
+    }
+    return result;
+  }, [importOrders, debouncedSearch, filters.startDate, filters.endDate]);
+
   const totalAmount = cart.reduce((sum, item) => sum + item.quantity * item.unit_cost, 0);
 
   const addToCart = (productId: string) => {
