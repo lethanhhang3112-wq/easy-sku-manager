@@ -245,8 +245,17 @@ const ProductsPage = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Reusable Add Product Modal */}
+      <AddProductModal
+        open={addModalOpen}
+        onOpenChange={setAddModalOpen}
+        onSuccess={() => queryClient.invalidateQueries({ queryKey: ["products"] })}
+      />
     </div>
   );
 };
+
+export default ProductsPage;
 
 export default ProductsPage;
