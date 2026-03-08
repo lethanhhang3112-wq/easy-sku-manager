@@ -152,6 +152,11 @@ const SalesPage = () => {
   const [amountPaidManual, setAmountPaidManual] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'transfer'>('cash');
   const [invoiceCode, setInvoiceCode] = useState("Đang tạo...");
+  const [orderDate, setOrderDate] = useState(() => {
+    const now = new Date();
+    now.setSeconds(0, 0);
+    return now;
+  });
 
   // Generate code on mount
   useEffect(() => {
