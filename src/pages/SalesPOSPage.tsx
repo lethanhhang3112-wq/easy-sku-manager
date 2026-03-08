@@ -264,11 +264,20 @@ const SalesPage = () => {
     mutationFn: async () => {
       if (cart.length === 0) throw new Error("Chưa có sản phẩm nào trong giỏ hàng");
 
-      // Validate stock
+      // Fetch latest stock for all cart items to prevent race conditions
+      const { data: latestProducts, error: fetchErr } = await supabase
+        .from("products")
+        .select("id, stock_quantity")
+        .in("id", cart.map((c) => c.product_id));
+      if (fetchErr) throw fetchErr;
+
+      const stockMap = new Map((latestProducts || []).map((p) => [p.id, p.stock_quantity]));
+
+      // Validate stock against latest data
       for (const item of cart) {
-        const product = products.find((p) => p.id === item.product_id);
-        if (product && item.quantity > product.stock_quantity) {
-          throw new Error(`${item.product_name} chỉ còn ${product.stock_quantity} trong kho`);
+        const currentStock = stockMap.get(item.product_id) ?? 0;
+        if (item.quantity > currentStock) {
+          throw new Error(`${item.product_name} chỉ còn ${currentStock} trong kho`);
         }
       }
 
