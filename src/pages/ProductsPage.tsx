@@ -137,6 +137,11 @@ const ProductsPage = () => {
         onOpenChange={setAddModalOpen}
         onSuccess={() => queryClient.invalidateQueries({ queryKey: ["products"] })}
       />
+      <StockLedgerSheet
+        open={!!ledgerProduct}
+        onOpenChange={(open) => { if (!open) setLedgerProduct(null); }}
+        product={ledgerProduct}
+      />
     </div>
   );
 };
