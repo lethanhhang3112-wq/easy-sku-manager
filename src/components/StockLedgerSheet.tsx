@@ -221,6 +221,73 @@ function ProductInfoTab({ product, onSaved }: { product: Product; onSaved: () =>
   );
 }
 
+type ComputedRow = LedgerEntry & {
+  description: string;
+  inQty: number;
+  inPrice: number;
+  inAmount: number;
+  outQty: number;
+  outPrice: number;
+  outAmount: number;
+  balanceQty: number;
+  balanceAvgPrice: number;
+  balanceTotal: number;
+  overstock: boolean;
+};
+
+function computeWeightedAverage(entries: LedgerEntry[]): ComputedRow[] {
+  // Sort oldest first for running balance
+  const sorted = [...entries].sort(
+    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+  );
+
+  let balanceQty = 0;
+  let balanceTotal = 0;
+
+  return sorted.map((e) => {
+    const isImport = e.type === "import";
+    const qty = Math.abs(e.quantity);
+    let inQty = 0, inPrice = 0, inAmount = 0;
+    let outQty = 0, outPrice = 0, outAmount = 0;
+    let overstock = false;
+
+    if (isImport) {
+      inQty = qty;
+      inPrice = e.price;
+      inAmount = qty * e.price;
+      balanceQty += qty;
+      balanceTotal += inAmount;
+    } else {
+      outQty = qty;
+      if (outQty > balanceQty) {
+        overstock = true;
+      }
+      const avgPriceBefore = balanceQty > 0 ? balanceTotal / balanceQty : 0;
+      outPrice = Math.round(avgPriceBefore * 100) / 100;
+      outAmount = Math.round(outQty * outPrice);
+      balanceQty -= outQty;
+      balanceTotal -= outAmount;
+      if (balanceQty <= 0) {
+        balanceQty = 0;
+        balanceTotal = 0;
+      }
+    }
+
+    const balanceAvgPrice = balanceQty > 0 ? Math.round((balanceTotal / balanceQty) * 100) / 100 : 0;
+
+    return {
+      ...e,
+      description: isImport ? `Nhập từ ${e.partnerName}` : `Bán cho ${e.partnerName}`,
+      inQty, inPrice, inAmount,
+      outQty, outPrice, outAmount,
+      balanceQty,
+      balanceAvgPrice,
+      balanceTotal: Math.round(balanceTotal),
+      overstock,
+    };
+  });
+}
+
 function StockLedgerTab({ productId }: { productId: string }) {
   const [entries, setEntries] = useState<LedgerEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -233,58 +300,92 @@ function StockLedgerTab({ productId }: { productId: string }) {
       .finally(() => setLoading(false));
   }, [productId]);
 
+  const rows = useMemo(() => computeWeightedAverage(entries), [entries]);
+
   return (
     <div className="pt-4">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Thời gian</TableHead>
-            <TableHead>Mã chứng từ</TableHead>
-            <TableHead>Loại</TableHead>
-            <TableHead>Đối tác</TableHead>
-            <TableHead className="text-right">SL</TableHead>
-            <TableHead className="text-right">Giá</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {loading ? (
-            Array.from({ length: 4 }).map((_, i) => (
-              <TableRow key={i}>
-                {Array.from({ length: 6 }).map((_, j) => (
-                  <TableCell key={j}><Skeleton className="h-4 w-full" /></TableCell>
-                ))}
-              </TableRow>
-            ))
-          ) : entries.length === 0 ? (
+      <div className="relative w-full overflow-auto max-h-[60vh] border rounded-md">
+        <Table>
+          <TableHeader className="sticky top-0 z-10 bg-muted/95 backdrop-blur-sm">
             <TableRow>
-              <TableCell colSpan={6} className="text-center text-muted-foreground">
-                Chưa có giao dịch nào
-              </TableCell>
+              <TableHead rowSpan={2} className="border-r align-middle min-w-[90px]">Ngày tháng</TableHead>
+              <TableHead rowSpan={2} className="border-r align-middle min-w-[90px]">Mã chứng từ</TableHead>
+              <TableHead rowSpan={2} className="border-r align-middle min-w-[120px]">Diễn giải</TableHead>
+              <TableHead colSpan={3} className="text-center border-r border-b text-emerald-600">Nhập</TableHead>
+              <TableHead colSpan={3} className="text-center border-r border-b text-blue-600">Xuất</TableHead>
+              <TableHead colSpan={3} className="text-center border-b text-foreground">Tồn kho</TableHead>
             </TableRow>
-          ) : (
-            entries.map((e) => (
-              <TableRow key={e.id}>
-                <TableCell className="whitespace-nowrap">
-                  {e.date ? format(new Date(e.date), "dd/MM/yyyy HH:mm") : "—"}
+            <TableRow>
+              <TableHead className="text-right text-xs min-w-[50px]">SL</TableHead>
+              <TableHead className="text-right text-xs min-w-[70px]">Đơn giá</TableHead>
+              <TableHead className="text-right text-xs border-r min-w-[80px]">Thành tiền</TableHead>
+              <TableHead className="text-right text-xs min-w-[50px]">SL</TableHead>
+              <TableHead className="text-right text-xs min-w-[70px]">Đơn giá</TableHead>
+              <TableHead className="text-right text-xs border-r min-w-[80px]">Thành tiền</TableHead>
+              <TableHead className="text-right text-xs min-w-[50px]">SL</TableHead>
+              <TableHead className="text-right text-xs min-w-[70px]">ĐG BQ</TableHead>
+              <TableHead className="text-right text-xs min-w-[90px]">Tổng GT</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {loading ? (
+              Array.from({ length: 4 }).map((_, i) => (
+                <TableRow key={i}>
+                  {Array.from({ length: 12 }).map((_, j) => (
+                    <TableCell key={j}><Skeleton className="h-4 w-full" /></TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : rows.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={12} className="text-center text-muted-foreground py-8">
+                  Chưa có giao dịch nào
                 </TableCell>
-                <TableCell className="font-mono">{e.code}</TableCell>
-                <TableCell>
-                  {e.type === "import" ? (
-                    <Badge className="bg-emerald-500/15 text-emerald-600 border-emerald-500/30 hover:bg-emerald-500/20">Nhập hàng</Badge>
-                  ) : (
-                    <Badge className="bg-blue-500/15 text-blue-600 border-blue-500/30 hover:bg-blue-500/20">Bán hàng</Badge>
-                  )}
-                </TableCell>
-                <TableCell>{e.partnerName}</TableCell>
-                <TableCell className={`text-right font-medium ${e.quantity > 0 ? "text-emerald-600" : "text-blue-600"}`}>
-                  {e.quantity > 0 ? `+${e.quantity}` : e.quantity}
-                </TableCell>
-                <TableCell className="text-right">{formatVND(e.price)}</TableCell>
               </TableRow>
-            ))
-          )}
-        </TableBody>
-      </Table>
+            ) : (
+              rows.map((r) => (
+                <TableRow key={r.id} className={r.overstock ? "bg-destructive/10" : ""}>
+                  <TableCell className="whitespace-nowrap text-xs border-r">
+                    {r.date ? format(new Date(r.date), "dd/MM/yyyy") : "—"}
+                  </TableCell>
+                  <TableCell className="font-mono text-xs border-r">{r.code}</TableCell>
+                  <TableCell className="text-xs border-r truncate max-w-[140px]" title={r.description}>{r.description}</TableCell>
+                  {/* Nhập */}
+                  <TableCell className="text-right text-xs text-emerald-600 font-medium">
+                    {r.inQty > 0 ? r.inQty : ""}
+                  </TableCell>
+                  <TableCell className="text-right text-xs">
+                    {r.inQty > 0 ? formatVND(r.inPrice) : ""}
+                  </TableCell>
+                  <TableCell className="text-right text-xs border-r font-medium">
+                    {r.inQty > 0 ? formatVND(r.inAmount) : ""}
+                  </TableCell>
+                  {/* Xuất */}
+                  <TableCell className="text-right text-xs text-blue-600 font-medium">
+                    {r.outQty > 0 ? r.outQty : ""}
+                  </TableCell>
+                  <TableCell className="text-right text-xs">
+                    {r.outQty > 0 ? formatVND(r.outPrice) : ""}
+                  </TableCell>
+                  <TableCell className="text-right text-xs border-r font-medium">
+                    {r.outQty > 0 ? formatVND(r.outAmount) : ""}
+                  </TableCell>
+                  {/* Tồn kho */}
+                  <TableCell className={`text-right text-xs font-bold ${r.overstock ? "text-destructive" : ""}`}>
+                    {r.balanceQty}
+                  </TableCell>
+                  <TableCell className="text-right text-xs">
+                    {formatVND(r.balanceAvgPrice)}
+                  </TableCell>
+                  <TableCell className="text-right text-xs font-medium">
+                    {formatVND(r.balanceTotal)}
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
     </div>
   );
 }
