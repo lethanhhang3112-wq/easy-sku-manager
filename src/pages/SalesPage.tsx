@@ -285,6 +285,7 @@ const SalesPage = () => {
           code,
           customer_id: customerId || null,
           total_amount: totalToPay,
+          payment_method: paymentMethod,
         })
         .select()
         .single();
