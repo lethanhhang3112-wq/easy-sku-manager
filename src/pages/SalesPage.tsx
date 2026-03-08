@@ -561,7 +561,7 @@ const SalesPage = () => {
 
           {/* Checkout button */}
           <Button
-            className="w-full h-14 text-lg font-bold bg-[hsl(var(--success))] hover:bg-[hsl(var(--success))]/90 text-[hsl(var(--success-foreground))]"
+            className="w-full h-14 text-lg font-bold bg-success hover:bg-success/90 text-success-foreground"
             onClick={() => checkoutMutation.mutate()}
             disabled={cart.length === 0 || checkoutMutation.isPending}
           >
