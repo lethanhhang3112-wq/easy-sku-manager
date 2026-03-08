@@ -257,6 +257,44 @@ export type Database = {
           },
         ]
       }
+      stock_adjustments: {
+        Row: {
+          created_at: string
+          id: string
+          note: string | null
+          product_id: string
+          quantity: number
+          type: string
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          note?: string | null
+          product_id: string
+          quantity: number
+          type: string
+          unit_price?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          note?: string | null
+          product_id?: string
+          quantity?: number
+          type?: string
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_adjustments_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       suppliers: {
         Row: {
           address: string | null

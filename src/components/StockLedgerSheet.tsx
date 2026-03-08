@@ -19,20 +19,22 @@ import {
 import {
   Popover, PopoverContent, PopoverTrigger,
 } from "@/components/ui/popover";
-import { CurrencyInput, formatCurrency, parseCurrency } from "@/components/CurrencyInput";
+import { CurrencyInput, formatCurrency } from "@/components/CurrencyInput";
+import { StockAdjustmentModal } from "@/components/StockAdjustmentModal";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { ChevronsUpDown, Check } from "lucide-react";
+import { ChevronsUpDown, Check, PackagePlus, PackageMinus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type LedgerEntry = {
   id: string;
   date: string;
   code: string;
-  type: "import" | "sale";
+  type: "import" | "sale" | "adjust_in" | "adjust_out";
   partnerName: string;
   quantity: number;
   price: number;
+  note?: string;
 };
 
 type Product = {
@@ -54,7 +56,7 @@ type Props = {
 const formatVND = (n: number) => new Intl.NumberFormat("vi-VN").format(n);
 
 async function fetchStockLedger(productId: string): Promise<LedgerEntry[]> {
-  const [importsRes, salesRes] = await Promise.all([
+  const [importsRes, salesRes, adjustRes] = await Promise.all([
     supabase
       .from("import_order_items")
       .select("id, quantity, unit_cost, import_orders(code, created_at, suppliers(name))")
@@ -63,10 +65,15 @@ async function fetchStockLedger(productId: string): Promise<LedgerEntry[]> {
       .from("sales_order_items")
       .select("id, quantity, unit_price, sales_orders(code, created_at, customers(name))")
       .eq("product_id", productId),
+    supabase
+      .from("stock_adjustments")
+      .select("*")
+      .eq("product_id", productId),
   ]);
 
   if (importsRes.error) throw importsRes.error;
   if (salesRes.error) throw salesRes.error;
+  if (adjustRes.error) throw adjustRes.error;
 
   const importEntries: LedgerEntry[] = (importsRes.data ?? []).map((item: any) => ({
     id: item.id,
@@ -88,11 +95,23 @@ async function fetchStockLedger(productId: string): Promise<LedgerEntry[]> {
     price: item.unit_price,
   }));
 
-  return [...importEntries, ...saleEntries].sort(
+  const adjustEntries: LedgerEntry[] = (adjustRes.data ?? []).map((item: any) => ({
+    id: item.id,
+    date: item.created_at,
+    code: item.type === "in" ? "ADJ-IN" : "ADJ-OUT",
+    type: item.type === "in" ? "adjust_in" : "adjust_out",
+    partnerName: "",
+    quantity: item.type === "in" ? item.quantity : -item.quantity,
+    price: item.unit_price,
+    note: item.note,
+  }));
+
+  return [...importEntries, ...saleEntries, ...adjustEntries].sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
   );
 }
 
+// --- Product Info Tab ---
 function ProductInfoTab({ product, onSaved }: { product: Product; onSaved: () => void }) {
   const queryClient = useQueryClient();
   const [name, setName] = useState(product.name);
@@ -221,6 +240,7 @@ function ProductInfoTab({ product, onSaved }: { product: Product; onSaved: () =>
   );
 }
 
+// --- Computed Row type ---
 type ComputedRow = LedgerEntry & {
   description: string;
   inQty: number;
@@ -236,7 +256,6 @@ type ComputedRow = LedgerEntry & {
 };
 
 function computeWeightedAverage(entries: LedgerEntry[]): ComputedRow[] {
-  // Sort oldest first for running balance
   const sorted = [...entries].sort(
     (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
   );
@@ -245,13 +264,13 @@ function computeWeightedAverage(entries: LedgerEntry[]): ComputedRow[] {
   let balanceTotal = 0;
 
   return sorted.map((e) => {
-    const isImport = e.type === "import";
+    const isInbound = e.type === "import" || e.type === "adjust_in";
     const qty = Math.abs(e.quantity);
     let inQty = 0, inPrice = 0, inAmount = 0;
     let outQty = 0, outPrice = 0, outAmount = 0;
     let overstock = false;
 
-    if (isImport) {
+    if (isInbound) {
       inQty = qty;
       inPrice = e.price;
       inAmount = qty * e.price;
@@ -259,25 +278,28 @@ function computeWeightedAverage(entries: LedgerEntry[]): ComputedRow[] {
       balanceTotal += inAmount;
     } else {
       outQty = qty;
-      if (outQty > balanceQty) {
-        overstock = true;
-      }
+      if (outQty > balanceQty) overstock = true;
       const avgPriceBefore = balanceQty > 0 ? balanceTotal / balanceQty : 0;
       outPrice = Math.round(avgPriceBefore * 100) / 100;
       outAmount = Math.round(outQty * outPrice);
       balanceQty -= outQty;
       balanceTotal -= outAmount;
-      if (balanceQty <= 0) {
-        balanceQty = 0;
-        balanceTotal = 0;
-      }
+      if (balanceQty <= 0) { balanceQty = 0; balanceTotal = 0; }
     }
 
     const balanceAvgPrice = balanceQty > 0 ? Math.round((balanceTotal / balanceQty) * 100) / 100 : 0;
 
+    let description = "";
+    switch (e.type) {
+      case "import": description = `Nhập từ ${e.partnerName}`; break;
+      case "sale": description = `Bán cho ${e.partnerName}`; break;
+      case "adjust_in": description = e.note ? `Nhập điều chỉnh: ${e.note}` : "Nhập điều chỉnh"; break;
+      case "adjust_out": description = e.note ? `Xuất điều chỉnh: ${e.note}` : "Xuất điều chỉnh"; break;
+    }
+
     return {
       ...e,
-      description: isImport ? `Nhập từ ${e.partnerName}` : `Bán cho ${e.partnerName}`,
+      description,
       inQty, inPrice, inAmount,
       outQty, outPrice, outAmount,
       balanceQty,
@@ -288,28 +310,61 @@ function computeWeightedAverage(entries: LedgerEntry[]): ComputedRow[] {
   });
 }
 
-function StockLedgerTab({ productId }: { productId: string }) {
+// --- Stock Ledger Tab ---
+function StockLedgerTab({ product }: { product: Product }) {
   const [entries, setEntries] = useState<LedgerEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [adjType, setAdjType] = useState<"in" | "out">("in");
+  const [adjOpen, setAdjOpen] = useState(false);
 
-  useEffect(() => {
+  const loadData = () => {
     setLoading(true);
-    fetchStockLedger(productId)
+    fetchStockLedger(product.id)
       .then(setEntries)
       .catch(() => setEntries([]))
       .finally(() => setLoading(false));
-  }, [productId]);
+  };
+
+  useEffect(() => { loadData(); }, [product.id]);
 
   const rows = useMemo(() => computeWeightedAverage(entries), [entries]);
 
+  const typeLabel = (type: string) => {
+    switch (type) {
+      case "import": return <Badge variant="outline" className="text-emerald-600 border-emerald-300">Nhập hàng</Badge>;
+      case "sale": return <Badge variant="outline" className="text-blue-600 border-blue-300">Xuất bán</Badge>;
+      case "adjust_in": return <Badge variant="outline" className="text-emerald-600 border-emerald-300">Nhập ĐC</Badge>;
+      case "adjust_out": return <Badge variant="outline" className="text-destructive border-destructive/30">Xuất ĐC</Badge>;
+      default: return type;
+    }
+  };
+
   return (
-    <div className="pt-4">
-      <div className="relative w-full overflow-auto max-h-[60vh] border rounded-md">
+    <div className="pt-4 space-y-4">
+      {/* Action buttons */}
+      <div className="flex gap-2">
+        <Button
+          onClick={() => { setAdjType("in"); setAdjOpen(true); }}
+          className="bg-emerald-600 hover:bg-emerald-700"
+        >
+          <PackagePlus className="mr-2 h-4 w-4" /> Nhập kho
+        </Button>
+        <Button
+          variant="destructive"
+          onClick={() => { setAdjType("out"); setAdjOpen(true); }}
+        >
+          <PackageMinus className="mr-2 h-4 w-4" /> Xuất kho
+        </Button>
+      </div>
+
+      {/* Table */}
+      <div className="relative w-full overflow-auto max-h-[55vh] border rounded-md">
         <Table>
           <TableHeader className="sticky top-0 z-10 bg-muted/95 backdrop-blur-sm">
             <TableRow>
               <TableHead rowSpan={2} className="border-r align-middle min-w-[90px]">Ngày tháng</TableHead>
               <TableHead rowSpan={2} className="border-r align-middle min-w-[90px]">Mã chứng từ</TableHead>
+              <TableHead rowSpan={2} className="border-r align-middle min-w-[70px]">Loại</TableHead>
               <TableHead rowSpan={2} className="border-r align-middle min-w-[120px]">Diễn giải</TableHead>
               <TableHead colSpan={3} className="text-center border-r border-b text-emerald-600">Nhập</TableHead>
               <TableHead colSpan={3} className="text-center border-r border-b text-blue-600">Xuất</TableHead>
@@ -331,14 +386,14 @@ function StockLedgerTab({ productId }: { productId: string }) {
             {loading ? (
               Array.from({ length: 4 }).map((_, i) => (
                 <TableRow key={i}>
-                  {Array.from({ length: 12 }).map((_, j) => (
+                  {Array.from({ length: 13 }).map((_, j) => (
                     <TableCell key={j}><Skeleton className="h-4 w-full" /></TableCell>
                   ))}
                 </TableRow>
               ))
             ) : rows.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={12} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={13} className="text-center text-muted-foreground py-8">
                   Chưa có giao dịch nào
                 </TableCell>
               </TableRow>
@@ -349,8 +404,8 @@ function StockLedgerTab({ productId }: { productId: string }) {
                     {r.date ? format(new Date(r.date), "dd/MM/yyyy") : "—"}
                   </TableCell>
                   <TableCell className="font-mono text-xs border-r">{r.code}</TableCell>
+                  <TableCell className="text-xs border-r">{typeLabel(r.type)}</TableCell>
                   <TableCell className="text-xs border-r truncate max-w-[140px]" title={r.description}>{r.description}</TableCell>
-                  {/* Nhập */}
                   <TableCell className="text-right text-xs text-emerald-600 font-medium">
                     {r.inQty > 0 ? r.inQty : ""}
                   </TableCell>
@@ -360,7 +415,6 @@ function StockLedgerTab({ productId }: { productId: string }) {
                   <TableCell className="text-right text-xs border-r font-medium">
                     {r.inQty > 0 ? formatVND(r.inAmount) : ""}
                   </TableCell>
-                  {/* Xuất */}
                   <TableCell className="text-right text-xs text-blue-600 font-medium">
                     {r.outQty > 0 ? r.outQty : ""}
                   </TableCell>
@@ -370,7 +424,6 @@ function StockLedgerTab({ productId }: { productId: string }) {
                   <TableCell className="text-right text-xs border-r font-medium">
                     {r.outQty > 0 ? formatVND(r.outAmount) : ""}
                   </TableCell>
-                  {/* Tồn kho */}
                   <TableCell className={`text-right text-xs font-bold ${r.overstock ? "text-destructive" : ""}`}>
                     {r.balanceQty}
                   </TableCell>
@@ -386,10 +439,20 @@ function StockLedgerTab({ productId }: { productId: string }) {
           </TableBody>
         </Table>
       </div>
+
+      <StockAdjustmentModal
+        open={adjOpen}
+        onOpenChange={(v) => { setAdjOpen(v); if (!v) loadData(); }}
+        productId={product.id}
+        productName={product.name}
+        type={adjType}
+        currentStock={product.stock_quantity}
+      />
     </div>
   );
 }
 
+// --- Main Sheet ---
 export function StockLedgerSheet({ open, onOpenChange, product }: Props) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -413,7 +476,7 @@ export function StockLedgerSheet({ open, onOpenChange, product }: Props) {
               <ProductInfoTab product={product} onSaved={() => {}} />
             </TabsContent>
             <TabsContent value="ledger">
-              <StockLedgerTab productId={product.id} />
+              <StockLedgerTab product={product} />
             </TabsContent>
           </Tabs>
         )}
