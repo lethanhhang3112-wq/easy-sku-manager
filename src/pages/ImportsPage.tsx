@@ -382,6 +382,16 @@ const ImportsPage = () => {
     toast.success("Đã xuất file CSV");
   };
 
+  const cancelEdit = () => {
+    if (!selectedOrder) return;
+    setIsEditing(false);
+    setEditNotes(selectedOrder.notes || "");
+    const dt = new Date(selectedOrder.created_at);
+    dt.setMinutes(dt.getMinutes() - dt.getTimezoneOffset());
+    setEditDate(dt.toISOString().slice(0, 16));
+    setEditSupplierId(selectedOrder.supplier_id);
+  };
+
   const isCancelled = selectedOrder?.status === "cancelled";
 
   // ─── Render ────────────────────────────────────────────────
