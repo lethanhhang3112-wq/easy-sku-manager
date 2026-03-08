@@ -7,9 +7,9 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, Search } from "lucide-react";
+import { Plus, Trash2, Search, History } from "lucide-react";
 import { AddProductModal } from "@/components/AddProductModal";
-
+import { StockLedgerSheet } from "@/components/StockLedgerSheet";
 type Product = {
   id: string;
   code: string;
@@ -29,6 +29,7 @@ const ProductsPage = () => {
   const queryClient = useQueryClient();
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const [ledgerProduct, setLedgerProduct] = useState<Product | null>(null);
 
   const { data: products = [], isLoading } = useQuery({
     queryKey: ["products"],
@@ -116,6 +117,9 @@ const ProductsPage = () => {
                   <TableCell className="text-right font-medium">{p.stock_quantity}</TableCell>
                   <TableCell>
                     <div className="flex gap-1">
+                      <Button variant="ghost" size="icon" onClick={() => setLedgerProduct(p)}>
+                        <History className="h-4 w-4" />
+                      </Button>
                       <Button variant="ghost" size="icon" onClick={() => deleteMutation.mutate(p.id)}>
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
@@ -132,6 +136,11 @@ const ProductsPage = () => {
         open={addModalOpen}
         onOpenChange={setAddModalOpen}
         onSuccess={() => queryClient.invalidateQueries({ queryKey: ["products"] })}
+      />
+      <StockLedgerSheet
+        open={!!ledgerProduct}
+        onOpenChange={(open) => { if (!open) setLedgerProduct(null); }}
+        product={ledgerProduct}
       />
     </div>
   );
