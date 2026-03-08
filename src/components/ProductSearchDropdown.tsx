@@ -142,4 +142,6 @@ export const ProductSearchDropdown = forwardRef<ProductSearchDropdownRef, Produc
       )}
     </div>
   );
-};
+});
+
+ProductSearchDropdown.displayName = "ProductSearchDropdown";
