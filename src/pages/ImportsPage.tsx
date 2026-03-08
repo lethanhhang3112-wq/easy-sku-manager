@@ -201,7 +201,7 @@ const ImportsPage = () => {
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">Nhập hàng</h1>
-        <Button onClick={openAdd}>
+        <Button onClick={() => navigate("/imports/create")}>
           <Plus className="mr-2 h-4 w-4" /> Tạo phiếu nhập
         </Button>
       </div>
