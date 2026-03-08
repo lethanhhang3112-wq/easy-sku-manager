@@ -327,36 +327,15 @@ const SalesPage = () => {
       {/* ═══ LEFT COLUMN ═══ */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Search */}
-        <div className="relative mb-3">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Tìm sản phẩm theo tên hoặc mã hàng (F3)..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 h-11 text-base"
+        <div className="mb-3">
+          <ProductSearchDropdown
+            onSelect={(p) => addToCart(p.id)}
+            excludeIds={[]}
+            displayPrice="sale_price"
+            onlyInStock
             autoFocus
+            placeholder="Tìm sản phẩm theo tên hoặc mã hàng (F3)..."
           />
-          {searchTerm && filteredProducts.length > 0 && (
-            <div className="absolute z-50 top-full left-0 right-0 mt-1 border rounded-lg bg-popover shadow-lg max-h-64 overflow-y-auto">
-              {filteredProducts.map((p) => (
-                <button
-                  key={p.id}
-                  className="w-full px-4 py-2.5 text-left hover:bg-accent flex items-center gap-3 text-sm border-b last:border-b-0 transition-colors"
-                  onClick={() => addToCart(p.id)}
-                >
-                  <span className="font-mono text-muted-foreground w-20 shrink-0">{p.code}</span>
-                  <span className="flex-1 truncate">{p.name}</span>
-                  <span className="text-muted-foreground text-xs">Tồn: {p.stock_quantity}</span>
-                  <span className="font-medium text-primary w-28 text-right">{fmt(p.sale_price)}</span>
-                </button>
-              ))}
-            </div>
-          )}
-          {searchTerm && filteredProducts.length === 0 && (
-            <div className="absolute z-50 top-full left-0 right-0 mt-1 border rounded-lg bg-popover shadow-lg px-4 py-3 text-sm text-muted-foreground">
-              Không tìm thấy sản phẩm
-            </div>
-          )}
         </div>
 
         {/* Cart Table */}
