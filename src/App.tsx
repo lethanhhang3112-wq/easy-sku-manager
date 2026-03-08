@@ -7,6 +7,7 @@ import { AppLayout } from "@/components/AppLayout";
 import Index from "./pages/Index";
 import SalesPage from "./pages/SalesPage";
 import ImportsPage from "./pages/ImportsPage";
+import CreateImportPage from "./pages/CreateImportPage";
 import ProductsPage from "./pages/ProductsPage";
 import CategoriesPage from "./pages/CategoriesPage";
 import SuppliersPage from "./pages/SuppliersPage";
