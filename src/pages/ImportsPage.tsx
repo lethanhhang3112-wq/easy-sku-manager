@@ -78,6 +78,10 @@ const ImportsPage = () => {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [selectedProduct, setSelectedProduct] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<ImportOrder | null>(null);
+  const [filters, setFilters] = useState<FilterState>({
+    searchQuery: "", startDate: undefined, endDate: undefined, quickFilter: "",
+  });
+  const debouncedSearch = useDebounce(filters.searchQuery, 300);
 
   const { data: importOrders = [], isLoading } = useQuery({
     queryKey: ["import_orders"],
