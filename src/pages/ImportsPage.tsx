@@ -615,22 +615,20 @@ const ImportsPage = () => {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label className="text-xs text-muted-foreground">Thời gian</Label>
-                      {isCancelled ? (
-                        <p className="text-sm">{format(new Date(selectedOrder.created_at), "dd/MM/yyyy HH:mm")}</p>
-                      ) : (
+                      {isEditing && !isCancelled ? (
                         <Input
                           type="datetime-local"
                           value={editDate}
                           onChange={(e) => setEditDate(e.target.value)}
                           className="h-8 text-sm"
                         />
+                      ) : (
+                        <p className="text-sm">{format(new Date(selectedOrder.created_at), "dd/MM/yyyy HH:mm")}</p>
                       )}
                     </div>
                     <div>
                       <Label className="text-xs text-muted-foreground">Nhà cung cấp</Label>
-                      {selectedOrder.supplier_id || isCancelled ? (
-                        <p className="text-sm">{selectedOrder.suppliers?.name || "—"}</p>
-                      ) : (
+                      {isEditing && !isCancelled && !selectedOrder.supplier_id ? (
                         <Select value={editSupplierId || ""} onValueChange={setEditSupplierId}>
                           <SelectTrigger className="h-8 text-sm">
                             <SelectValue placeholder="Chọn NCC" />
@@ -641,6 +639,19 @@ const ImportsPage = () => {
                             ))}
                           </SelectContent>
                         </Select>
+                      ) : isEditing && !isCancelled && selectedOrder.supplier_id ? (
+                        <Select value={editSupplierId || ""} onValueChange={setEditSupplierId}>
+                          <SelectTrigger className="h-8 text-sm">
+                            <SelectValue placeholder="Chọn NCC" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {suppliers.map((s) => (
+                              <SelectItem key={s.id} value={s.id}>{s.code} - {s.name}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <p className="text-sm">{selectedOrder.suppliers?.name || "—"}</p>
                       )}
                     </div>
                   </div>
@@ -662,9 +673,7 @@ const ImportsPage = () => {
 
                   <div>
                     <Label className="text-xs text-muted-foreground">Ghi chú</Label>
-                    {isCancelled ? (
-                      <p className="text-sm">{selectedOrder.notes || "—"}</p>
-                    ) : (
+                    {isEditing && !isCancelled ? (
                       <Textarea
                         value={editNotes}
                         onChange={(e) => setEditNotes(e.target.value)}
@@ -672,6 +681,8 @@ const ImportsPage = () => {
                         className="text-sm"
                         placeholder="Ghi chú cho phiếu nhập..."
                       />
+                    ) : (
+                      <p className="text-sm">{selectedOrder.notes || "—"}</p>
                     )}
                   </div>
 
