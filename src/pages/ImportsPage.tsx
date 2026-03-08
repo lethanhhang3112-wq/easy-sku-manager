@@ -356,7 +356,7 @@ const ImportsPage = () => {
           </DialogHeader>
           {detailOrder && (
             <div className="space-y-3">
-              <p><span className="text-muted-foreground">NCC:</span> {detailOrder.supplier_id ? supplierMap[detailOrder.supplier_id]?.name || "—" : "—"}</p>
+              <p><span className="text-muted-foreground">NCC:</span> {detailOrder.suppliers?.name || "—"}</p>
               <p><span className="text-muted-foreground">Ngày:</span> {new Date(detailOrder.created_at).toLocaleString("vi-VN")}</p>
               <div className="border rounded-lg">
                 <Table>
