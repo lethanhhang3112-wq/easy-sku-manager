@@ -194,17 +194,6 @@ const SalesPage = () => {
   const effectivePaid = amountPaidManual ? amountPaid : totalToPay;
   const effectiveChange = Math.max(0, effectivePaid - totalToPay);
 
-  const filteredProducts = useMemo(() => {
-    if (!searchTerm.trim()) return [];
-    const term = searchTerm.toLowerCase();
-    return products
-      .filter(
-        (p) =>
-          (p.name.toLowerCase().includes(term) || p.code.toLowerCase().includes(term)) &&
-          p.stock_quantity > 0
-      )
-      .slice(0, 8);
-  }, [products, searchTerm]);
 
   const selectedCustomer = customers.find((c) => c.id === customerId);
 
