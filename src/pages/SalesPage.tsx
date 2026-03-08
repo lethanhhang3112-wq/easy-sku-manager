@@ -325,6 +325,7 @@ const SalesPage = () => {
       setDiscount(0);
       setAmountPaid(0);
       setAmountPaidManual(false);
+      setPaymentMethod('cash');
       setInvoiceCode(await generateSalesCode());
     },
     onError: (e: any) => toast.error(e.message),
