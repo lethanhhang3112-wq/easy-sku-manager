@@ -426,7 +426,7 @@ export function StockLedgerTab({ product }: { product: Product }) {
               ))
             ) : pagedRows.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
                   {hasFilters ? "Không có giao dịch phù hợp bộ lọc" : "Chưa có giao dịch nào"}
                 </TableCell>
               </TableRow>
