@@ -27,7 +27,11 @@ interface ProductSearchDropdownProps {
   autoFocus?: boolean;
 }
 
-export const ProductSearchDropdown = ({
+export interface ProductSearchDropdownRef {
+  focus: () => void;
+}
+
+export const ProductSearchDropdown = forwardRef<ProductSearchDropdownRef, ProductSearchDropdownProps>(({
   onSelect,
   excludeIds = [],
   placeholder = "Tìm hàng hóa theo tên, mã hàng (F3)...",
@@ -35,11 +39,16 @@ export const ProductSearchDropdown = ({
   onlyInStock = false,
   className,
   autoFocus = false,
-}: ProductSearchDropdownProps) => {
+}, ref) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const debouncedTerm = useDebounce(searchTerm, 300);
   const containerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useImperativeHandle(ref, () => ({
+    focus: () => inputRef.current?.focus(),
+  }));
 
   // Close dropdown on outside click
   useEffect(() => {
