@@ -284,6 +284,8 @@ const ImportsPage = () => {
         </Button>
       </div>
 
+      <ImportFilterBar filters={filters} onFiltersChange={setFilters} />
+
       <div className="bg-card rounded-lg border">
         <Table>
           <TableHeader>
