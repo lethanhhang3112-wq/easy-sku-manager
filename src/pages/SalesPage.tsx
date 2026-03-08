@@ -16,6 +16,7 @@ import {
 import {
   Popover, PopoverContent, PopoverTrigger,
 } from "@/components/ui/popover";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "sonner";
 import { Search, Trash2, Plus, Minus, ChevronsUpDown, Check, ShoppingCart } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -148,6 +149,7 @@ const SalesPage = () => {
   const [discount, setDiscount] = useState(0);
   const [amountPaid, setAmountPaid] = useState(0);
   const [amountPaidManual, setAmountPaidManual] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'transfer'>('cash');
   const [invoiceCode, setInvoiceCode] = useState("Đang tạo...");
 
   // Generate code on mount
@@ -284,6 +286,7 @@ const SalesPage = () => {
           code,
           customer_id: customerId || null,
           total_amount: totalToPay,
+          payment_method: paymentMethod,
         })
         .select()
         .single();
@@ -323,6 +326,7 @@ const SalesPage = () => {
       setDiscount(0);
       setAmountPaid(0);
       setAmountPaidManual(false);
+      setPaymentMethod('cash');
       setInvoiceCode(await generateSalesCode());
     },
     onError: (e: any) => toast.error(e.message),
@@ -555,6 +559,20 @@ const SalesPage = () => {
           <div className="flex justify-between items-center">
             <span className="text-sm text-muted-foreground">Tiền thừa trả khách</span>
             <span className="font-semibold text-success">{fmt(effectiveChange)}</span>
+          </div>
+
+          <div className="border-t pt-3">
+            <Label className="text-sm text-muted-foreground mb-2 block">Phương thức thanh toán</Label>
+            <RadioGroup value={paymentMethod} onValueChange={(v) => setPaymentMethod(v as 'cash' | 'transfer')}>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="cash" id="cash" />
+                <Label htmlFor="cash" className="font-normal cursor-pointer text-sm">Tiền mặt</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="transfer" id="transfer" />
+                <Label htmlFor="transfer" className="font-normal cursor-pointer text-sm">Chuyển khoản</Label>
+              </div>
+            </RadioGroup>
           </div>
 
           <div className="flex-1" />
