@@ -300,27 +300,6 @@ export function StockLedgerTab({ product }: { product: Product }) {
 
   return (
     <div className="pt-4 space-y-4">
-      {/* Header Info Cards */}
-      <div className="grid grid-cols-2 gap-3">
-        <div className="border rounded-lg p-3 flex items-center gap-3 bg-card">
-          <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
-            <Package className="h-5 w-5 text-primary" />
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Tồn kho hiện tại</p>
-            <p className="text-xl font-bold">{currentStock}</p>
-          </div>
-        </div>
-        <div className="border rounded-lg p-3 flex items-center gap-3 bg-card">
-          <div className="h-10 w-10 rounded-lg bg-accent flex items-center justify-center">
-            <TrendingUp className="h-5 w-5 text-primary" />
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Giá trị tồn kho</p>
-            <p className="text-xl font-bold">{formatVND(stockValue)}</p>
-          </div>
-        </div>
-      </div>
 
       {/* Action Buttons */}
       <div className="flex gap-2">
