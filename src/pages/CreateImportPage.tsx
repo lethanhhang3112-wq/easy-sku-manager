@@ -139,6 +139,14 @@ const CreateImportPage = () => {
     setCart((prev) => prev.map((c) => c.product_id === pid ? { ...c, [field]: Math.max(0, value) } : c));
   }, []);
 
+  const updateSubtotal = useCallback((pid: string, newSubtotal: number) => {
+    setCart((prev) => prev.map((c) => {
+      if (c.product_id !== pid) return c;
+      const unitCost = c.quantity > 0 ? (newSubtotal + c.item_discount) / c.quantity : 0;
+      return { ...c, unit_cost: Math.max(0, Math.round(unitCost * 100) / 100) };
+    }));
+  }, []);
+
   const removeFromCart = useCallback((pid: string) => {
     setCart((prev) => prev.filter((c) => c.product_id !== pid));
   }, []);
@@ -315,7 +323,15 @@ const CreateImportPage = () => {
                             className={cn(inlineInputClass, "text-right w-full")}
                           />
                         </TableCell>
-                        <TableCell className="text-right text-sm font-medium text-foreground">{fmt(subtotal)}</TableCell>
+                        <TableCell className="px-2">
+                          <input
+                            type="number"
+                            min={0}
+                            value={subtotal}
+                            onChange={(e) => updateSubtotal(item.product_id, parseFloat(e.target.value) || 0)}
+                            className={cn(inlineInputClass, "text-right w-full font-medium")}
+                          />
+                        </TableCell>
                       </TableRow>
                     );
                   })
