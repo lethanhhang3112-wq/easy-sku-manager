@@ -204,7 +204,7 @@ const SalesPage = () => {
       const product = products.find((p) => p.id === productId);
       if (!product) return;
       if (product.stock_quantity <= 0) {
-        toast.warning(`${product.name} đã hết hàng`);
+        toast.error("Sản phẩm này đã hết hàng!", { description: product.name });
         return;
       }
 
