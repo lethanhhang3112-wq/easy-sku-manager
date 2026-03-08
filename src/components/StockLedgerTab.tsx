@@ -452,8 +452,6 @@ export function StockLedgerTab({ product }: { product: Product }) {
                     {r.balanceQty}
                   </TableCell>
                   <TableCell className="text-right text-xs">{formatVND(r.transactionPrice)}</TableCell>
-                  <TableCell className="text-right text-xs font-medium">{formatVND(r.transactionValue)}</TableCell>
-                  <TableCell className="text-right text-xs font-semibold text-primary">{formatVND(r.balanceMAC)}</TableCell>
                 </TableRow>
               ))
             )}
