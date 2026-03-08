@@ -152,6 +152,11 @@ const SalesPage = () => {
   const [amountPaidManual, setAmountPaidManual] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'transfer'>('cash');
   const [invoiceCode, setInvoiceCode] = useState("Đang tạo...");
+  const [orderDate, setOrderDate] = useState(() => {
+    const now = new Date();
+    now.setSeconds(0, 0);
+    return now;
+  });
 
   // Generate code on mount
   useEffect(() => {
@@ -291,6 +296,7 @@ const SalesPage = () => {
           customer_id: customerId || null,
           total_amount: totalToPay,
           payment_method: paymentMethod,
+          created_at: orderDate.toISOString(),
         })
         .select()
         .single();
@@ -329,6 +335,8 @@ const SalesPage = () => {
       setAmountPaid(0);
       setAmountPaidManual(false);
       setPaymentMethod('cash');
+      const now = new Date(); now.setSeconds(0, 0);
+      setOrderDate(now);
       setInvoiceCode(await generateSalesCode());
       // Focus search input for next order
       setTimeout(() => searchRef.current?.focus(), 100);
@@ -443,9 +451,23 @@ const SalesPage = () => {
       {/* ═══ RIGHT COLUMN ═══ */}
       <div className="w-[340px] shrink-0 flex flex-col gap-3">
         {/* Invoice code */}
-        <div className="bg-card border rounded-lg p-4">
-          <Label className="text-muted-foreground text-xs">Mã hóa đơn</Label>
-          <p className="font-mono font-semibold text-lg">{invoiceCode}</p>
+        <div className="bg-card border rounded-lg p-4 space-y-3">
+          <div>
+            <Label className="text-muted-foreground text-xs">Mã hóa đơn</Label>
+            <p className="font-mono font-semibold text-lg">{invoiceCode}</p>
+          </div>
+          <div>
+            <Label className="text-muted-foreground text-xs">Thời gian</Label>
+            <input
+              type="datetime-local"
+              value={`${orderDate.getFullYear()}-${String(orderDate.getMonth()+1).padStart(2,'0')}-${String(orderDate.getDate()).padStart(2,'0')}T${String(orderDate.getHours()).padStart(2,'0')}:${String(orderDate.getMinutes()).padStart(2,'0')}`}
+              onChange={(e) => {
+                const v = e.target.value;
+                if (v) setOrderDate(new Date(v));
+              }}
+              className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            />
+          </div>
         </div>
 
         {/* Customer selection */}
