@@ -35,7 +35,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import {
   Plus, Search, Filter, ChevronUp, ChevronDown, CalendarIcon, X,
-  Eye, Printer, Copy, FileDown, Ban, Save, Barcode, PanelLeftClose, PanelLeft,
+  Eye, Printer, Copy, FileDown, Ban, Save, Barcode, PanelLeftClose, PanelLeft, Pencil,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useDebounce } from "@/hooks/use-debounce";
@@ -129,6 +129,7 @@ const ImportsPage = () => {
   const [voidTarget, setVoidTarget] = useState<ImportOrder | null>(null);
 
   // Inline edit state
+  const [isEditing, setIsEditing] = useState(false);
   const [editNotes, setEditNotes] = useState("");
   const [editDate, setEditDate] = useState("");
   const [editSupplierId, setEditSupplierId] = useState<string | null>(null);
@@ -295,7 +296,8 @@ const ImportsPage = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["import_orders"] });
-      toast.success("Đã cập nhật phiếu nhập");
+      setIsEditing(false);
+      toast.success("Cập nhật phiếu nhập thành công!");
     },
     onError: (e: any) => toast.error(e.message),
   });
@@ -303,6 +305,7 @@ const ImportsPage = () => {
   // ─── Handlers ──────────────────────────────────────────────
   const openDetail = (order: ImportOrder) => {
     setSelectedOrder(order);
+    setIsEditing(false);
     setEditNotes(order.notes || "");
     const dt = new Date(order.created_at);
     dt.setMinutes(dt.getMinutes() - dt.getTimezoneOffset());
@@ -378,6 +381,16 @@ const ImportsPage = () => {
     a.click();
     URL.revokeObjectURL(url);
     toast.success("Đã xuất file CSV");
+  };
+
+  const cancelEdit = () => {
+    if (!selectedOrder) return;
+    setIsEditing(false);
+    setEditNotes(selectedOrder.notes || "");
+    const dt = new Date(selectedOrder.created_at);
+    dt.setMinutes(dt.getMinutes() - dt.getTimezoneOffset());
+    setEditDate(dt.toISOString().slice(0, 16));
+    setEditSupplierId(selectedOrder.supplier_id);
   };
 
   const isCancelled = selectedOrder?.status === "cancelled";
@@ -603,22 +616,20 @@ const ImportsPage = () => {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label className="text-xs text-muted-foreground">Thời gian</Label>
-                      {isCancelled ? (
-                        <p className="text-sm">{format(new Date(selectedOrder.created_at), "dd/MM/yyyy HH:mm")}</p>
-                      ) : (
+                      {isEditing && !isCancelled ? (
                         <Input
                           type="datetime-local"
                           value={editDate}
                           onChange={(e) => setEditDate(e.target.value)}
                           className="h-8 text-sm"
                         />
+                      ) : (
+                        <p className="text-sm">{format(new Date(selectedOrder.created_at), "dd/MM/yyyy HH:mm")}</p>
                       )}
                     </div>
                     <div>
                       <Label className="text-xs text-muted-foreground">Nhà cung cấp</Label>
-                      {selectedOrder.supplier_id || isCancelled ? (
-                        <p className="text-sm">{selectedOrder.suppliers?.name || "—"}</p>
-                      ) : (
+                      {isEditing && !isCancelled && !selectedOrder.supplier_id ? (
                         <Select value={editSupplierId || ""} onValueChange={setEditSupplierId}>
                           <SelectTrigger className="h-8 text-sm">
                             <SelectValue placeholder="Chọn NCC" />
@@ -629,6 +640,19 @@ const ImportsPage = () => {
                             ))}
                           </SelectContent>
                         </Select>
+                      ) : isEditing && !isCancelled && selectedOrder.supplier_id ? (
+                        <Select value={editSupplierId || ""} onValueChange={setEditSupplierId}>
+                          <SelectTrigger className="h-8 text-sm">
+                            <SelectValue placeholder="Chọn NCC" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {suppliers.map((s) => (
+                              <SelectItem key={s.id} value={s.id}>{s.code} - {s.name}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <p className="text-sm">{selectedOrder.suppliers?.name || "—"}</p>
                       )}
                     </div>
                   </div>
@@ -650,9 +674,7 @@ const ImportsPage = () => {
 
                   <div>
                     <Label className="text-xs text-muted-foreground">Ghi chú</Label>
-                    {isCancelled ? (
-                      <p className="text-sm">{selectedOrder.notes || "—"}</p>
-                    ) : (
+                    {isEditing && !isCancelled ? (
                       <Textarea
                         value={editNotes}
                         onChange={(e) => setEditNotes(e.target.value)}
@@ -660,6 +682,8 @@ const ImportsPage = () => {
                         className="text-sm"
                         placeholder="Ghi chú cho phiếu nhập..."
                       />
+                    ) : (
+                      <p className="text-sm">{selectedOrder.notes || "—"}</p>
                     )}
                   </div>
 
@@ -755,30 +779,43 @@ const ImportsPage = () => {
           {/* ─── Bottom Action Bar ─────────────────────────── */}
           {selectedOrder && (
             <div className="border-t p-3 flex items-center gap-2 flex-wrap bg-background print:hidden">
-              {!isCancelled && (
-                <Button size="sm" onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending}>
-                  <Save className="mr-1.5 h-3.5 w-3.5" />
-                  {saveMutation.isPending ? "Đang lưu..." : "Lưu"}
-                </Button>
-              )}
-              <Button variant="outline" size="sm" onClick={handlePrint}>
-                <Printer className="mr-1.5 h-3.5 w-3.5" /> In
-              </Button>
-              <Button variant="outline" size="sm" onClick={handleExportDetail}>
-                <FileDown className="mr-1.5 h-3.5 w-3.5" /> Xuất file
-              </Button>
-              <Button variant="outline" size="sm" onClick={handleCopy}>
-                <Copy className="mr-1.5 h-3.5 w-3.5" /> Sao chép
-              </Button>
-              {!isCancelled && (
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  className="ml-auto"
-                  onClick={() => setVoidTarget(selectedOrder)}
-                >
-                  <Ban className="mr-1.5 h-3.5 w-3.5" /> Hủy bỏ
-                </Button>
+              {isEditing && !isCancelled ? (
+                <>
+                  <Button size="sm" onClick={() => { saveMutation.mutate(); }} disabled={saveMutation.isPending}>
+                    <Save className="mr-1.5 h-3.5 w-3.5" />
+                    {saveMutation.isPending ? "Đang lưu..." : "Lưu cập nhật"}
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={cancelEdit}>
+                    <X className="mr-1.5 h-3.5 w-3.5" /> Hủy sửa
+                  </Button>
+                </>
+              ) : (
+                <>
+                  {!isCancelled && (
+                    <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
+                      <Pencil className="mr-1.5 h-3.5 w-3.5" /> Sửa
+                    </Button>
+                  )}
+                  <Button variant="outline" size="sm" onClick={handlePrint}>
+                    <Printer className="mr-1.5 h-3.5 w-3.5" /> In
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={handleExportDetail}>
+                    <FileDown className="mr-1.5 h-3.5 w-3.5" /> Xuất file
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={handleCopy}>
+                    <Copy className="mr-1.5 h-3.5 w-3.5" /> Sao chép
+                  </Button>
+                  {!isCancelled && (
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      className="ml-auto"
+                      onClick={() => setVoidTarget(selectedOrder)}
+                    >
+                      <Ban className="mr-1.5 h-3.5 w-3.5" /> Hủy bỏ
+                    </Button>
+                  )}
+                </>
               )}
             </div>
           )}
