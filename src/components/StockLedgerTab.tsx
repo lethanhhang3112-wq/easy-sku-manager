@@ -216,6 +216,10 @@ function MobileCard({ row }: { row: ComputedRow }) {
       </div>
       <div className="flex items-center justify-between text-xs text-muted-foreground">
         <span>{row.date ? format(new Date(row.date), "dd/MM/yyyy HH:mm") : "—"}</span>
+        <span>Giá GD: {formatVND(row.transactionPrice)}</span>
+      </div>
+      <div className="flex items-center justify-between text-xs text-muted-foreground">
+        <span>{row.partnerName || "—"}</span>
         <span>GT: {formatVND(row.transactionValue)}</span>
       </div>
     </div>
