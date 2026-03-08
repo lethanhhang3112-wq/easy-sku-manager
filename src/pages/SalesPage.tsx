@@ -309,8 +309,8 @@ const SalesPage = () => {
     onSuccess: async (code) => {
       queryClient.invalidateQueries({ queryKey: ["sales_orders"] });
       queryClient.invalidateQueries({ queryKey: ["products"] });
-      toast.success(`Thanh toán thành công! Mã: ${code}`);
-      // Reset
+      toast.success(`Thanh toán thành công! Mã: ${code}. Đã sẵn sàng cho đơn hàng mới.`);
+      // Reset all states
       setCart([]);
       setCustomerId("");
       setDiscount(0);
@@ -318,6 +318,8 @@ const SalesPage = () => {
       setAmountPaidManual(false);
       setPaymentMethod('cash');
       setInvoiceCode(await generateSalesCode());
+      // Focus search input for next order
+      setTimeout(() => searchRef.current?.focus(), 100);
     },
     onError: (e: any) => toast.error(e.message),
   });
