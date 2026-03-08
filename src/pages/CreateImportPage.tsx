@@ -20,7 +20,7 @@ import {
   Popover, PopoverContent, PopoverTrigger,
 } from "@/components/ui/popover";
 import { toast } from "sonner";
-import { Search, Plus, X, ChevronsUpDown, Check, Pen, ArrowLeft } from "lucide-react";
+import { Search, Plus, X, ChevronsUpDown, Check, PenLine } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // ─── Types ───────────────────────────────────────────────────────
@@ -35,9 +35,7 @@ type CartItem = {
   item_discount: number;
 };
 
-// ─── Helpers ─────────────────────────────────────────────────────
-const fmt = (n: number) =>
-  new Intl.NumberFormat("vi-VN").format(n);
+const fmt = (n: number) => new Intl.NumberFormat("vi-VN").format(n);
 
 async function generateImportCode(): Promise<string> {
   const now = new Date();
@@ -58,7 +56,6 @@ async function generateImportCode(): Promise<string> {
   return `${prefix}001`;
 }
 
-// ─── Dummy seed (shown on first load, like the KiotViet screenshot) ──
 const DUMMY_ITEMS: CartItem[] = [
   { product_id: "dummy-1", product_code: "SP000028", product_name: "Áo sơ mi nam sọc trắng", quantity: 1, unit_cost: 250000, item_discount: 0 },
   { product_id: "dummy-2", product_code: "SP000029", product_name: "Áo sơ mi nam màu đỏ caro", quantity: 1, unit_cost: 250000, item_discount: 0 },
@@ -69,7 +66,6 @@ const CreateImportPage = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  // ── State ────────────────────────────────────────────────────
   const [code, setCode] = useState("");
   const [supplierId, setSupplierId] = useState("");
   const [supplierOpen, setSupplierOpen] = useState(false);
@@ -81,17 +77,13 @@ const CreateImportPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [searchFocused, setSearchFocused] = useState(false);
 
-  // Quick-add supplier modal
   const [addSupplierOpen, setAddSupplierOpen] = useState(false);
   const [newSupplierName, setNewSupplierName] = useState("");
   const [newSupplierPhone, setNewSupplierPhone] = useState("");
   const [newSupplierAddress, setNewSupplierAddress] = useState("");
 
-  useEffect(() => {
-    generateImportCode().then(setCode);
-  }, []);
+  useEffect(() => { generateImportCode().then(setCode); }, []);
 
-  // ── Queries ──────────────────────────────────────────────────
   const { data: suppliers = [], refetch: refetchSuppliers } = useQuery({
     queryKey: ["suppliers"],
     queryFn: async () => {
@@ -112,7 +104,6 @@ const CreateImportPage = () => {
 
   const selectedSupplier = suppliers.find((s) => s.id === supplierId);
 
-  // ── Search ───────────────────────────────────────────────────
   const filteredProducts = useMemo(() => {
     if (!searchTerm.trim()) return [];
     const term = searchTerm.toLowerCase();
@@ -121,19 +112,14 @@ const CreateImportPage = () => {
       .slice(0, 10);
   }, [searchTerm, products, cart]);
 
-  // ── Calculations ─────────────────────────────────────────────
   const totalQuantity = useMemo(() => cart.reduce((s, c) => s + c.quantity, 0), [cart]);
-  const totalAmount = useMemo(
-    () => cart.reduce((s, c) => s + (c.quantity * c.unit_cost - c.item_discount), 0),
-    [cart]
-  );
+  const totalAmount = useMemo(() => cart.reduce((s, c) => s + (c.quantity * c.unit_cost - c.item_discount), 0), [cart]);
   const amountToPay = useMemo(() => Math.max(0, totalAmount - globalDiscount - alreadyPaid), [totalAmount, globalDiscount, alreadyPaid]);
   const debt = useMemo(() => Math.max(0, amountToPay - payingAmount), [amountToPay, payingAmount]);
 
   const now = new Date();
   const dateTimeStr = `${String(now.getDate()).padStart(2, "0")}/${String(now.getMonth() + 1).padStart(2, "0")}/${now.getFullYear()} ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
 
-  // ── Cart Actions ─────────────────────────────────────────────
   const addToCart = useCallback((product: Product) => {
     if (cart.some((c) => c.product_id === product.id)) return;
     setCart((prev) => [...prev, {
@@ -152,7 +138,6 @@ const CreateImportPage = () => {
     setCart((prev) => prev.filter((c) => c.product_id !== pid));
   }, []);
 
-  // ── Add Supplier ─────────────────────────────────────────────
   const addSupplierMutation = useMutation({
     mutationFn: async () => {
       if (!newSupplierName.trim()) throw new Error("Tên NCC không được để trống");
@@ -167,16 +152,13 @@ const CreateImportPage = () => {
       return data;
     },
     onSuccess: (data) => {
-      refetchSuppliers();
-      setSupplierId(data.id);
-      setAddSupplierOpen(false);
+      refetchSuppliers(); setSupplierId(data.id); setAddSupplierOpen(false);
       setNewSupplierName(""); setNewSupplierPhone(""); setNewSupplierAddress("");
       toast.success("Đã thêm nhà cung cấp");
     },
     onError: (e: any) => toast.error(e.message),
   });
 
-  // ── Submit ───────────────────────────────────────────────────
   const submitMutation = useMutation({
     mutationFn: async () => {
       const realCart = cart.filter((c) => !c.product_id.startsWith("dummy-"));
@@ -209,27 +191,25 @@ const CreateImportPage = () => {
     onError: (e: any) => toast.error(e.message),
   });
 
-  const saveDraft = () => {
-    toast.info("Đã lưu tạm phiếu nhập");
-  };
+  const saveDraft = () => toast.info("Đã lưu tạm phiếu nhập");
 
   // ═══════════════════════════════════════════════════════════════
-  return (
-    <div className="h-[calc(100vh-2rem)] flex flex-col -m-6 bg-background">
-      {/* ── Top Header Bar ───────────────────────────────────── */}
-      <div className="h-12 bg-primary flex items-center px-4 gap-3 shrink-0">
-        <button onClick={() => navigate("/imports")} className="text-primary-foreground hover:opacity-80 transition-opacity">
-          <ArrowLeft className="h-5 w-5" />
-        </button>
-        <h1 className="text-primary-foreground font-bold text-base">Nhập hàng</h1>
-      </div>
+  // KiotViet-style inline input: no border, just a subtle bottom line
+  const inlineInputClass = "h-7 text-sm border-0 border-b border-border/60 rounded-none bg-transparent shadow-none focus-visible:ring-0 focus-visible:border-primary px-0";
 
-      {/* ── Main 2-Column Layout ─────────────────────────────── */}
+  return (
+    <div className="h-[calc(100vh-2rem)] flex flex-col -m-6">
+      {/* ═══ MAIN 2-COLUMN LAYOUT ═══════════════════════════════ */}
       <div className="flex-1 flex overflow-hidden">
-        {/* ════ LEFT COLUMN ═══════════════════════════════════ */}
-        <div className="flex-1 flex flex-col min-w-0 bg-background">
-          {/* Search Bar */}
-          <div className="px-4 pt-4 pb-3">
+
+        {/* ════════════════════════════════════════════════════════
+            LEFT COLUMN — Product search + table
+            ════════════════════════════════════════════════════════ */}
+        <div className="flex-[7] flex flex-col min-w-0 bg-card">
+
+          {/* Title + Search */}
+          <div className="px-5 pt-5 pb-3 space-y-3 border-b bg-card">
+            <h1 className="text-xl font-bold text-foreground">Nhập hàng</h1>
             <div className="flex gap-2">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -239,15 +219,14 @@ const CreateImportPage = () => {
                   onChange={(e) => setSearchTerm(e.target.value)}
                   onFocus={() => setSearchFocused(true)}
                   onBlur={() => setTimeout(() => setSearchFocused(false), 200)}
-                  className="pl-10 h-10 bg-card border-input"
+                  className="pl-10 h-9"
                 />
-                {/* Search Dropdown */}
                 {searchFocused && filteredProducts.length > 0 && (
-                  <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-popover border rounded-md shadow-lg max-h-64 overflow-y-auto">
+                  <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-popover border rounded-md shadow-lg max-h-60 overflow-y-auto">
                     {filteredProducts.map((p) => (
                       <button
                         key={p.id}
-                        className="w-full px-3 py-2.5 text-left hover:bg-accent flex items-center gap-3 border-b border-border/50 last:border-b-0 text-sm transition-colors"
+                        className="w-full px-3 py-2 text-left hover:bg-accent flex items-center gap-3 border-b border-border/40 last:border-b-0 text-sm"
                         onMouseDown={() => addToCart(p)}
                       >
                         <span className="font-mono text-xs text-muted-foreground">{p.code}</span>
@@ -259,117 +238,115 @@ const CreateImportPage = () => {
                   </div>
                 )}
               </div>
-              <Button size="icon" variant="outline" className="h-10 w-10 shrink-0">
+              <Button size="icon" variant="outline" className="h-9 w-9 shrink-0">
                 <Plus className="h-4 w-4" />
               </Button>
             </div>
           </div>
 
-          {/* Products Table */}
-          <div className="flex-1 overflow-auto px-4 pb-4">
-            <div className="border rounded-md bg-card overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-muted/60 hover:bg-muted/60">
-                    <TableHead className="w-[40px] text-center"></TableHead>
-                    <TableHead className="w-[130px] text-xs font-semibold text-foreground">Mã hàng hóa</TableHead>
-                    <TableHead className="text-xs font-semibold text-foreground">Tên hàng</TableHead>
-                    <TableHead className="w-[100px] text-xs font-semibold text-foreground text-center">Số lượng</TableHead>
-                    <TableHead className="w-[140px] text-xs font-semibold text-foreground text-right">Đơn giá</TableHead>
-                    <TableHead className="w-[120px] text-xs font-semibold text-foreground text-right">Giảm giá</TableHead>
-                    <TableHead className="w-[140px] text-xs font-semibold text-foreground text-right">Thành tiền</TableHead>
+          {/* Data Table */}
+          <div className="flex-1 overflow-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted/40 hover:bg-muted/40 border-b">
+                  <TableHead className="w-[36px]" />
+                  <TableHead className="text-xs font-semibold text-foreground w-[120px]">Mã hàng hóa</TableHead>
+                  <TableHead className="text-xs font-semibold text-foreground">Tên hàng</TableHead>
+                  <TableHead className="text-xs font-semibold text-foreground text-center w-[90px]">Số lượng</TableHead>
+                  <TableHead className="text-xs font-semibold text-foreground text-right w-[120px]">Đơn giá</TableHead>
+                  <TableHead className="text-xs font-semibold text-foreground text-right w-[100px]">Giảm giá</TableHead>
+                  <TableHead className="text-xs font-semibold text-foreground text-right w-[120px]">Thành tiền</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {cart.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-20 text-muted-foreground">
+                      <Search className="h-10 w-10 mx-auto mb-2 opacity-20" />
+                      <p className="text-sm">Tìm và thêm sản phẩm vào phiếu nhập</p>
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {cart.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={7} className="text-center py-16 text-muted-foreground">
-                        <Search className="h-10 w-10 mx-auto mb-2 opacity-20" />
-                        <p>Tìm và thêm sản phẩm vào phiếu nhập</p>
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    cart.map((item) => {
-                      const subtotal = item.quantity * item.unit_cost - item.item_discount;
-                      return (
-                        <TableRow key={item.product_id} className="group">
-                          <TableCell className="text-center">
-                            <button
-                              onClick={() => removeFromCart(item.product_id)}
-                              className="text-destructive/60 hover:text-destructive transition-colors"
-                            >
-                              <X className="h-4 w-4" />
-                            </button>
-                          </TableCell>
-                          <TableCell className="font-mono text-xs text-primary">{item.product_code}</TableCell>
-                          <TableCell className="text-sm">{item.product_name}</TableCell>
-                          <TableCell>
-                            <Input
-                              type="number"
-                              min={1}
-                              value={item.quantity}
-                              onChange={(e) => updateField(item.product_id, "quantity", parseInt(e.target.value) || 1)}
-                              className="h-8 text-center border-0 border-b border-input rounded-none bg-transparent focus-visible:ring-0 focus-visible:border-primary px-1"
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Input
-                              type="number"
-                              min={0}
-                              value={item.unit_cost}
-                              onChange={(e) => updateField(item.product_id, "unit_cost", parseFloat(e.target.value) || 0)}
-                              className="h-8 text-right border-0 border-b border-input rounded-none bg-transparent focus-visible:ring-0 focus-visible:border-primary px-1"
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Input
-                              type="number"
-                              min={0}
-                              value={item.item_discount}
-                              onChange={(e) => updateField(item.product_id, "item_discount", parseFloat(e.target.value) || 0)}
-                              className="h-8 text-right border-0 border-b border-input rounded-none bg-transparent focus-visible:ring-0 focus-visible:border-primary px-1"
-                            />
-                          </TableCell>
-                          <TableCell className="text-right font-semibold text-sm">{fmt(subtotal)}</TableCell>
-                        </TableRow>
-                      );
-                    })
-                  )}
-                </TableBody>
-              </Table>
-            </div>
+                ) : (
+                  cart.map((item) => {
+                    const subtotal = item.quantity * item.unit_cost - item.item_discount;
+                    return (
+                      <TableRow key={item.product_id} className="border-b border-border/40">
+                        <TableCell className="text-center px-2">
+                          <button onClick={() => removeFromCart(item.product_id)} className="text-destructive hover:text-destructive/80">
+                            <X className="h-3.5 w-3.5" />
+                          </button>
+                        </TableCell>
+                        <TableCell className="font-mono text-xs text-primary">{item.product_code}</TableCell>
+                        <TableCell className="text-sm text-foreground">{item.product_name}</TableCell>
+                        <TableCell className="px-2">
+                          <input
+                            type="number"
+                            min={1}
+                            value={item.quantity}
+                            onChange={(e) => updateField(item.product_id, "quantity", parseInt(e.target.value) || 1)}
+                            className={cn(inlineInputClass, "text-center w-full")}
+                          />
+                        </TableCell>
+                        <TableCell className="px-2">
+                          <input
+                            type="number"
+                            min={0}
+                            value={item.unit_cost}
+                            onChange={(e) => updateField(item.product_id, "unit_cost", parseFloat(e.target.value) || 0)}
+                            className={cn(inlineInputClass, "text-right w-full")}
+                          />
+                        </TableCell>
+                        <TableCell className="px-2">
+                          <input
+                            type="number"
+                            min={0}
+                            value={item.item_discount}
+                            onChange={(e) => updateField(item.product_id, "item_discount", parseFloat(e.target.value) || 0)}
+                            className={cn(inlineInputClass, "text-right w-full")}
+                          />
+                        </TableCell>
+                        <TableCell className="text-right text-sm font-medium text-foreground">{fmt(subtotal)}</TableCell>
+                      </TableRow>
+                    );
+                  })
+                )}
+              </TableBody>
+            </Table>
           </div>
         </div>
 
-        {/* ════ RIGHT SIDEBAR ═════════════════════════════════ */}
-        <div className="w-[340px] shrink-0 border-l bg-card flex flex-col">
+        {/* ════════════════════════════════════════════════════════
+            RIGHT SIDEBAR — Summary & checkout
+            ════════════════════════════════════════════════════════ */}
+        <div className="w-[320px] shrink-0 border-l flex flex-col bg-background">
           <div className="flex-1 overflow-y-auto">
-            {/* User & Date */}
-            <div className="px-4 pt-4 pb-3 border-b text-xs text-muted-foreground flex items-center justify-between">
-              <span>admin</span>
+
+            {/* User + datetime */}
+            <div className="px-4 py-2.5 border-b flex items-center justify-between text-xs text-muted-foreground">
+              <span className="font-medium text-foreground">admin</span>
               <span>{dateTimeStr}</span>
             </div>
 
-            {/* Supplier Search */}
+            {/* Supplier search */}
             <div className="px-4 py-3 border-b">
-              <div className="flex gap-2">
+              <div className="flex gap-1.5">
                 <Popover open={supplierOpen} onOpenChange={setSupplierOpen}>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" role="combobox" className="flex-1 justify-between h-9 text-sm font-normal">
+                    <Button variant="outline" role="combobox" className="flex-1 justify-between h-8 text-xs font-normal px-2.5">
                       {selectedSupplier ? selectedSupplier.name : "Tìm nhà cung cấp (F4)"}
-                      <ChevronsUpDown className="ml-2 h-3.5 w-3.5 shrink-0 opacity-50" />
+                      <ChevronsUpDown className="ml-1 h-3 w-3 shrink-0 opacity-50" />
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-[270px] p-0" align="start">
+                  <PopoverContent className="w-[260px] p-0" align="start">
                     <Command>
-                      <CommandInput placeholder="Tìm NCC..." />
+                      <CommandInput placeholder="Tìm NCC..." className="text-xs" />
                       <CommandList>
-                        <CommandEmpty>Không tìm thấy</CommandEmpty>
+                        <CommandEmpty className="text-xs py-3">Không tìm thấy</CommandEmpty>
                         <CommandGroup>
                           {suppliers.map((s) => (
-                            <CommandItem key={s.id} value={`${s.code} ${s.name}`} onSelect={() => { setSupplierId(s.id === supplierId ? "" : s.id); setSupplierOpen(false); }}>
-                              <Check className={cn("mr-2 h-3.5 w-3.5", supplierId === s.id ? "opacity-100" : "opacity-0")} />
-                              <span className="font-mono text-xs mr-2 text-muted-foreground">{s.code}</span>
+                            <CommandItem key={s.id} value={`${s.code} ${s.name}`} onSelect={() => { setSupplierId(s.id === supplierId ? "" : s.id); setSupplierOpen(false); }} className="text-xs">
+                              <Check className={cn("mr-1.5 h-3 w-3", supplierId === s.id ? "opacity-100" : "opacity-0")} />
+                              <span className="font-mono text-[10px] mr-1.5 text-muted-foreground">{s.code}</span>
                               {s.name}
                             </CommandItem>
                           ))}
@@ -378,116 +355,131 @@ const CreateImportPage = () => {
                     </Command>
                   </PopoverContent>
                 </Popover>
-                <Button size="icon" variant="outline" className="h-9 w-9 shrink-0 text-primary border-primary/30 hover:bg-primary/10" onClick={() => setAddSupplierOpen(true)}>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-8 w-8 shrink-0 text-primary hover:text-primary hover:bg-primary/10"
+                  onClick={() => setAddSupplierOpen(true)}
+                >
                   <Plus className="h-4 w-4" />
                 </Button>
               </div>
             </div>
 
-            {/* Form Fields */}
-            <div className="px-4 py-3 space-y-3 text-sm">
+            {/* Form rows */}
+            <div className="px-4 py-3 space-y-2.5 text-xs">
               {/* Mã phiếu */}
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">Mã phiếu nhập</span>
-                <Input value={code} disabled className="w-[160px] h-8 text-right font-mono text-xs bg-muted border-0" />
+                <span className="font-mono text-foreground">{code || "Mã phiếu tự động"}</span>
               </div>
 
               {/* Trạng thái */}
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">Trạng thái</span>
-                <Badge variant="secondary" className="text-xs font-normal">Phiếu tạm</Badge>
+                <Badge variant="outline" className="text-[10px] h-5 font-normal border-primary/40 text-primary">Phiếu tạm</Badge>
               </div>
 
-              <div className="border-t my-2" />
+              <div className="border-t border-border/50 my-1" />
 
               {/* Tổng tiền hàng */}
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
                   <span className="text-muted-foreground">Tổng tiền hàng</span>
-                  <Badge variant="outline" className="text-[10px] h-5 px-1.5 font-normal">{totalQuantity}</Badge>
+                  <Badge variant="secondary" className="text-[10px] h-4 px-1.5 font-normal min-w-[20px] justify-center">{totalQuantity}</Badge>
                 </div>
-                <span className="font-semibold">{fmt(totalAmount)}</span>
+                <span className="font-semibold text-foreground text-sm">{fmt(totalAmount)}</span>
               </div>
 
               {/* Giảm giá */}
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">Giảm giá</span>
-                <Input
+                <input
                   type="number"
                   min={0}
                   value={globalDiscount}
                   onChange={(e) => setGlobalDiscount(parseFloat(e.target.value) || 0)}
-                  className="w-[120px] h-8 text-right border-0 border-b border-input rounded-none bg-transparent focus-visible:ring-0 focus-visible:border-primary"
+                  className={cn(inlineInputClass, "w-[100px] text-right")}
                 />
               </div>
 
               {/* Đã trả NCC */}
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">Đã trả nhà cung cấp</span>
-                <Input
+                <input
                   type="number"
                   min={0}
                   value={alreadyPaid}
                   onChange={(e) => setAlreadyPaid(parseFloat(e.target.value) || 0)}
-                  className="w-[120px] h-8 text-right border-0 border-b border-input rounded-none bg-transparent focus-visible:ring-0 focus-visible:border-primary"
+                  className={cn(inlineInputClass, "w-[100px] text-right")}
                 />
               </div>
 
-              <div className="border-t my-2" />
+              <div className="border-t border-border/50 my-1" />
 
-              {/* Cần trả NCC */}
-              <div className="flex items-center justify-between">
-                <span className="font-medium">Cần trả nhà cung cấp</span>
-                <span className="text-lg font-bold text-primary">{fmt(amountToPay)}</span>
+              {/* Cần trả NCC — prominent blue */}
+              <div className="flex items-center justify-between py-1">
+                <span className="text-muted-foreground font-medium">Cần trả nhà cung cấp</span>
+                <span className="text-base font-bold text-primary">{fmt(amountToPay)}</span>
               </div>
 
               {/* Tiền trả NCC */}
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">Tiền trả nhà cung cấp</span>
-                <Input
+                <input
                   type="number"
                   min={0}
                   value={payingAmount}
                   onChange={(e) => setPayingAmount(parseFloat(e.target.value) || 0)}
-                  className="w-[120px] h-8 text-right border-0 border-b border-input rounded-none bg-transparent focus-visible:ring-0 focus-visible:border-primary"
+                  className={cn(inlineInputClass, "w-[100px] text-right")}
                 />
               </div>
 
               {/* Tính vào công nợ */}
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">Tính vào công nợ</span>
-                <span className={cn("font-semibold", debt > 0 ? "text-destructive" : "text-foreground")}>{fmt(debt)}</span>
+                <span className={cn("font-semibold text-sm", debt > 0 ? "text-destructive" : "text-foreground")}>{fmt(debt)}</span>
               </div>
 
-              <div className="border-t my-2" />
+              <div className="border-t border-border/50 my-1" />
 
-              {/* Notes */}
+              {/* Ghi chú */}
               <div>
-                <div className="flex items-center gap-1.5 text-muted-foreground mb-1.5">
-                  <Pen className="h-3.5 w-3.5" />
-                  <span className="text-xs">Ghi chú</span>
+                <div className="flex items-center gap-1 text-muted-foreground mb-1">
+                  <PenLine className="h-3 w-3" />
+                  <span>Ghi chú</span>
                 </div>
                 <Textarea
                   placeholder="Ghi chú cho phiếu nhập..."
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  className="resize-none text-sm min-h-[60px]"
+                  className="resize-none text-xs min-h-[48px] bg-muted/30"
                   rows={2}
                 />
               </div>
             </div>
           </div>
 
-          {/* Action Buttons */}
-          <div className="p-4 border-t flex gap-2">
-            <Button variant="outline" className="flex-1 h-10" onClick={() => navigate("/imports")}>
+          {/* Action Buttons — bottom-pinned */}
+          <div className="px-4 py-3 border-t bg-card flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex-1 h-9 text-xs"
+              onClick={() => navigate("/imports")}
+            >
               Trở về
             </Button>
-            <Button variant="secondary" className="flex-1 h-10 bg-primary/10 text-primary hover:bg-primary/20" onClick={saveDraft}>
+            <Button
+              size="sm"
+              className="flex-1 h-9 text-xs bg-primary hover:bg-primary/90"
+              onClick={saveDraft}
+            >
               Lưu tạm
             </Button>
             <Button
-              className="flex-1 h-10 bg-[hsl(142,72%,40%)] hover:bg-[hsl(142,72%,35%)] text-[hsl(var(--success-foreground,0_0%_100%))]"
+              size="sm"
+              className="flex-1 h-9 text-xs bg-[hsl(142,72%,40%)] hover:bg-[hsl(142,72%,35%)] text-[hsl(0,0%,100%)]"
               onClick={() => submitMutation.mutate()}
               disabled={cart.length === 0 || submitMutation.isPending}
             >
