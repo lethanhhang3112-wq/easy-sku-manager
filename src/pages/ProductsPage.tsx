@@ -128,13 +128,7 @@ const ProductsPage = () => {
   });
 
   const openAdd = () => {
-    setEditing(null);
-    setCode("");
-    setName("");
-    setCategoryId("");
-    setCostPrice("");
-    setSalePrice("");
-    setOpen(true);
+    setAddModalOpen(true);
   };
 
   const openEdit = (p: Product) => {
