@@ -151,9 +151,9 @@ const SalesPage = () => {
   const [invoiceCode, setInvoiceCode] = useState("Đang tạo...");
 
   // Generate code on mount
-  useState(() => {
+  useEffect(() => {
     generateSalesCode().then(setInvoiceCode);
-  });
+  }, []);
 
   // ─── Data fetching ─────────────────────────────────────────────
   const { data: products = [] } = useQuery({
