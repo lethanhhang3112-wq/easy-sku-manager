@@ -199,13 +199,20 @@ const CreateImportPage = () => {
       const { error: itemsError } = await supabase.from("import_order_items").insert(items);
       if (itemsError) throw itemsError;
 
-      for (const item of realCart) {
-        const product = products.find((p) => p.id === item.product_id);
-        if (product) {
-          const { error } = await supabase.from("products").update({ stock_quantity: product.stock_quantity + item.quantity, cost_price: item.unit_cost }).eq("id", item.product_id);
-          if (error) throw error;
-        }
-      }
+      // Fetch latest stock for accurate update
+      const { data: latestProducts, error: fetchErr } = await supabase
+        .from("products")
+        .select("id, stock_quantity")
+        .in("id", realCart.map((c) => c.product_id));
+      if (fetchErr) throw fetchErr;
+
+      const stockMap = new Map((latestProducts || []).map((p) => [p.id, p.stock_quantity]));
+
+      await Promise.all(realCart.map(async (item) => {
+        const currentStock = stockMap.get(item.product_id) ?? 0;
+        const { error } = await supabase.from("products").update({ stock_quantity: currentStock + item.quantity, cost_price: item.unit_cost }).eq("id", item.product_id);
+        if (error) throw error;
+      }));
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["import_orders"] });

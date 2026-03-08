@@ -306,17 +306,15 @@ const SalesPage = () => {
       const { error: itemsError } = await supabase.from("sales_order_items").insert(items);
       if (itemsError) throw itemsError;
 
-      // Step C: Deduct stock
-      for (const item of cart) {
-        const product = products.find((p) => p.id === item.product_id);
-        if (product) {
-          const { error } = await supabase
-            .from("products")
-            .update({ stock_quantity: product.stock_quantity - item.quantity })
-            .eq("id", item.product_id);
-          if (error) throw error;
-        }
-      }
+      // Step C: Deduct stock using latest fetched values
+      await Promise.all(cart.map(async (item) => {
+        const currentStock = stockMap.get(item.product_id) ?? 0;
+        const { error } = await supabase
+          .from("products")
+          .update({ stock_quantity: currentStock - item.quantity })
+          .eq("id", item.product_id);
+        if (error) throw error;
+      }));
 
       return code;
     },
