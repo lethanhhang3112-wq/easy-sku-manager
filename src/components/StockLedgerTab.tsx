@@ -47,9 +47,10 @@ type ComputedRow = LedgerEntry & {
   description: string;
   inQty: number;
   outQty: number;
+  transactionPrice: number;
   transactionValue: number;
   balanceQty: number;
-  balanceAvgPrice: number;
+  balanceMAC: number;
   balanceTotal: number;
   overstock: boolean;
 };
