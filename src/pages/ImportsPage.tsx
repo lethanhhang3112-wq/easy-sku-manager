@@ -778,30 +778,43 @@ const ImportsPage = () => {
           {/* ─── Bottom Action Bar ─────────────────────────── */}
           {selectedOrder && (
             <div className="border-t p-3 flex items-center gap-2 flex-wrap bg-background print:hidden">
-              {!isCancelled && (
-                <Button size="sm" onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending}>
-                  <Save className="mr-1.5 h-3.5 w-3.5" />
-                  {saveMutation.isPending ? "Đang lưu..." : "Lưu"}
-                </Button>
-              )}
-              <Button variant="outline" size="sm" onClick={handlePrint}>
-                <Printer className="mr-1.5 h-3.5 w-3.5" /> In
-              </Button>
-              <Button variant="outline" size="sm" onClick={handleExportDetail}>
-                <FileDown className="mr-1.5 h-3.5 w-3.5" /> Xuất file
-              </Button>
-              <Button variant="outline" size="sm" onClick={handleCopy}>
-                <Copy className="mr-1.5 h-3.5 w-3.5" /> Sao chép
-              </Button>
-              {!isCancelled && (
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  className="ml-auto"
-                  onClick={() => setVoidTarget(selectedOrder)}
-                >
-                  <Ban className="mr-1.5 h-3.5 w-3.5" /> Hủy bỏ
-                </Button>
+              {isEditing && !isCancelled ? (
+                <>
+                  <Button size="sm" onClick={() => { saveMutation.mutate(); }} disabled={saveMutation.isPending}>
+                    <Save className="mr-1.5 h-3.5 w-3.5" />
+                    {saveMutation.isPending ? "Đang lưu..." : "Lưu cập nhật"}
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={cancelEdit}>
+                    <X className="mr-1.5 h-3.5 w-3.5" /> Hủy sửa
+                  </Button>
+                </>
+              ) : (
+                <>
+                  {!isCancelled && (
+                    <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
+                      <Pencil className="mr-1.5 h-3.5 w-3.5" /> Sửa
+                    </Button>
+                  )}
+                  <Button variant="outline" size="sm" onClick={handlePrint}>
+                    <Printer className="mr-1.5 h-3.5 w-3.5" /> In
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={handleExportDetail}>
+                    <FileDown className="mr-1.5 h-3.5 w-3.5" /> Xuất file
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={handleCopy}>
+                    <Copy className="mr-1.5 h-3.5 w-3.5" /> Sao chép
+                  </Button>
+                  {!isCancelled && (
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      className="ml-auto"
+                      onClick={() => setVoidTarget(selectedOrder)}
+                    >
+                      <Ban className="mr-1.5 h-3.5 w-3.5" /> Hủy bỏ
+                    </Button>
+                  )}
+                </>
               )}
             </div>
           )}
