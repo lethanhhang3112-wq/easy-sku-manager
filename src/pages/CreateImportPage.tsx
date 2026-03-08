@@ -90,11 +90,6 @@ const CreateImportPage = () => {
   const [newSupplierAddress, setNewSupplierAddress] = useState("");
 
   const [addProductOpen, setAddProductOpen] = useState(false);
-  const [newProductCode, setNewProductCode] = useState("");
-  const [newProductName, setNewProductName] = useState("");
-  const [newProductCategoryId, setNewProductCategoryId] = useState("");
-  const [newProductCostPrice, setNewProductCostPrice] = useState(0);
-  const [newProductSalePrice, setNewProductSalePrice] = useState(0);
 
   useEffect(() => { generateImportCode().then(setCode); }, []);
 
