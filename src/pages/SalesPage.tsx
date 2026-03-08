@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -21,7 +21,7 @@ import { toast } from "sonner";
 import { Search, Trash2, Plus, Minus, ChevronsUpDown, Check, ShoppingCart } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CurrencyInput, formatCurrency } from "@/components/CurrencyInput";
-import { ProductSearchDropdown } from "@/components/ProductSearchDropdown";
+import { ProductSearchDropdown, type ProductSearchDropdownRef } from "@/components/ProductSearchDropdown";
 
 // ─── Types ───────────────────────────────────────────────────────
 type Customer = { id: string; code: string; name: string; phone: string | null };
@@ -140,6 +140,7 @@ const AddCustomerModal = ({
 // ─── Main POS Page ───────────────────────────────────────────────
 const SalesPage = () => {
   const queryClient = useQueryClient();
+  const searchRef = useRef<ProductSearchDropdownRef>(null);
 
   // State
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -308,8 +309,8 @@ const SalesPage = () => {
     onSuccess: async (code) => {
       queryClient.invalidateQueries({ queryKey: ["sales_orders"] });
       queryClient.invalidateQueries({ queryKey: ["products"] });
-      toast.success(`Thanh toán thành công! Mã: ${code}`);
-      // Reset
+      toast.success(`Thanh toán thành công! Mã: ${code}. Đã sẵn sàng cho đơn hàng mới.`);
+      // Reset all states
       setCart([]);
       setCustomerId("");
       setDiscount(0);
@@ -317,6 +318,8 @@ const SalesPage = () => {
       setAmountPaidManual(false);
       setPaymentMethod('cash');
       setInvoiceCode(await generateSalesCode());
+      // Focus search input for next order
+      setTimeout(() => searchRef.current?.focus(), 100);
     },
     onError: (e: any) => toast.error(e.message),
   });
@@ -329,6 +332,7 @@ const SalesPage = () => {
         {/* Search */}
         <div className="mb-3">
           <ProductSearchDropdown
+            ref={searchRef}
             onSelect={(p) => addToCart(p.id)}
             excludeIds={[]}
             displayPrice="sale_price"

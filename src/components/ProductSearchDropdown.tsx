@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, forwardRef, useImperativeHandle } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useDebounce } from "@/hooks/use-debounce";
@@ -27,7 +27,11 @@ interface ProductSearchDropdownProps {
   autoFocus?: boolean;
 }
 
-export const ProductSearchDropdown = ({
+export interface ProductSearchDropdownRef {
+  focus: () => void;
+}
+
+export const ProductSearchDropdown = forwardRef<ProductSearchDropdownRef, ProductSearchDropdownProps>(({
   onSelect,
   excludeIds = [],
   placeholder = "Tìm hàng hóa theo tên, mã hàng (F3)...",
@@ -35,11 +39,16 @@ export const ProductSearchDropdown = ({
   onlyInStock = false,
   className,
   autoFocus = false,
-}: ProductSearchDropdownProps) => {
+}, ref) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const debouncedTerm = useDebounce(searchTerm, 300);
   const containerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useImperativeHandle(ref, () => ({
+    focus: () => inputRef.current?.focus(),
+  }));
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -100,6 +109,7 @@ export const ProductSearchDropdown = ({
         onFocus={() => setIsOpen(true)}
         className="pl-10 h-9"
         autoFocus={autoFocus}
+        ref={inputRef}
       />
       {showDropdown && (
         <div className="absolute z-50 top-full left-0 right-0 mt-1 border rounded-lg bg-popover shadow-lg max-h-64 overflow-y-auto">
@@ -133,4 +143,6 @@ export const ProductSearchDropdown = ({
       )}
     </div>
   );
-};
+});
+
+ProductSearchDropdown.displayName = "ProductSearchDropdown";
