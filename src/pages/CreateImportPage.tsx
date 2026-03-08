@@ -22,6 +22,7 @@ import {
 import { toast } from "sonner";
 import { Search, Plus, X, ChevronsUpDown, Check, PenLine, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { CurrencyInput, formatCurrency } from "@/components/CurrencyInput";
 
 // ─── Types ───────────────────────────────────────────────────────
 type Supplier = { id: string; code: string; name: string; phone: string | null; address: string | null };
@@ -35,7 +36,7 @@ type CartItem = {
   item_discount: number;
 };
 
-const fmt = (n: number) => new Intl.NumberFormat("vi-VN").format(n);
+const fmt = (n: number) => formatCurrency(n);
 
 async function generateImportCode(): Promise<string> {
   const now = new Date();
@@ -306,29 +307,23 @@ const CreateImportPage = () => {
                           />
                         </TableCell>
                         <TableCell className="px-2">
-                          <input
-                            type="number"
-                            min={0}
+                          <CurrencyInput
                             value={item.unit_cost}
-                            onChange={(e) => updateField(item.product_id, "unit_cost", parseFloat(e.target.value) || 0)}
+                            onChange={(v) => updateField(item.product_id, "unit_cost", v)}
                             className={cn(inlineInputClass, "text-right w-full")}
                           />
                         </TableCell>
                         <TableCell className="px-2">
-                          <input
-                            type="number"
-                            min={0}
+                          <CurrencyInput
                             value={item.item_discount}
-                            onChange={(e) => updateField(item.product_id, "item_discount", parseFloat(e.target.value) || 0)}
+                            onChange={(v) => updateField(item.product_id, "item_discount", v)}
                             className={cn(inlineInputClass, "text-right w-full")}
                           />
                         </TableCell>
                         <TableCell className="px-2">
-                          <input
-                            type="number"
-                            min={0}
+                          <CurrencyInput
                             value={subtotal}
-                            onChange={(e) => updateSubtotal(item.product_id, parseFloat(e.target.value) || 0)}
+                            onChange={(v) => updateSubtotal(item.product_id, v)}
                             className={cn(inlineInputClass, "text-right w-full font-medium")}
                           />
                         </TableCell>
@@ -425,17 +420,15 @@ const CreateImportPage = () => {
                   <span className="text-muted-foreground">Tổng tiền hàng</span>
                   <Badge variant="secondary" className="text-[10px] h-4 px-1.5 font-normal min-w-[20px] justify-center">{totalQuantity}</Badge>
                 </div>
-                <span className="font-semibold text-foreground text-sm">{fmt(totalAmount)}</span>
+                <span className="font-semibold text-foreground text-sm">{formatCurrency(totalAmount)}</span>
               </div>
 
               {/* Giảm giá */}
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">Giảm giá</span>
-                <input
-                  type="number"
-                  min={0}
+                <CurrencyInput
                   value={globalDiscount}
-                  onChange={(e) => setGlobalDiscount(parseFloat(e.target.value) || 0)}
+                  onChange={setGlobalDiscount}
                   className={cn(inlineInputClass, "w-[100px] text-right")}
                 />
               </div>
@@ -443,11 +436,9 @@ const CreateImportPage = () => {
               {/* Đã trả NCC */}
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">Đã trả nhà cung cấp</span>
-                <input
-                  type="number"
-                  min={0}
+                <CurrencyInput
                   value={alreadyPaid}
-                  onChange={(e) => setAlreadyPaid(parseFloat(e.target.value) || 0)}
+                  onChange={setAlreadyPaid}
                   className={cn(inlineInputClass, "w-[100px] text-right")}
                 />
               </div>
@@ -457,17 +448,15 @@ const CreateImportPage = () => {
               {/* Cần trả NCC — prominent blue */}
               <div className="flex items-center justify-between py-1">
                 <span className="text-muted-foreground font-medium">Cần trả nhà cung cấp</span>
-                <span className="text-base font-bold text-primary">{fmt(amountToPay)}</span>
+                <span className="text-base font-bold text-primary">{formatCurrency(amountToPay)}</span>
               </div>
 
               {/* Tiền trả NCC */}
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">Tiền trả nhà cung cấp</span>
-                <input
-                  type="number"
-                  min={0}
+                <CurrencyInput
                   value={payingAmount}
-                  onChange={(e) => setPayingAmount(parseFloat(e.target.value) || 0)}
+                  onChange={setPayingAmount}
                   className={cn(inlineInputClass, "w-[100px] text-right")}
                 />
               </div>
@@ -475,7 +464,7 @@ const CreateImportPage = () => {
               {/* Tính vào công nợ */}
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">Tính vào công nợ</span>
-                <span className={cn("font-semibold text-sm", debt > 0 ? "text-destructive" : "text-foreground")}>{fmt(debt)}</span>
+                <span className={cn("font-semibold text-sm", debt > 0 ? "text-destructive" : "text-foreground")}>{formatCurrency(debt)}</span>
               </div>
 
               <div className="border-t border-border/50 my-1" />
