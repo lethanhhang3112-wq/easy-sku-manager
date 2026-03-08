@@ -304,6 +304,7 @@ const ImportsPage = () => {
   // ─── Handlers ──────────────────────────────────────────────
   const openDetail = (order: ImportOrder) => {
     setSelectedOrder(order);
+    setIsEditing(false);
     setEditNotes(order.notes || "");
     const dt = new Date(order.created_at);
     dt.setMinutes(dt.getMinutes() - dt.getTimezoneOffset());
