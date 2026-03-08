@@ -59,10 +59,7 @@ async function generateImportCode(): Promise<string> {
   return `${prefix}001`;
 }
 
-const DUMMY_ITEMS: CartItem[] = [
-  { product_id: "dummy-1", product_code: "SP000028", product_name: "Áo sơ mi nam sọc trắng", quantity: 1, unit_cost: 250000, item_discount: 0 },
-  { product_id: "dummy-2", product_code: "SP000029", product_name: "Áo sơ mi nam màu đỏ caro", quantity: 1, unit_cost: 250000, item_discount: 0 },
-];
+const DUMMY_ITEMS: CartItem[] = [];
 
 // ═════════════════════════════════════════════════════════════════
 const CreateImportPage = () => {
