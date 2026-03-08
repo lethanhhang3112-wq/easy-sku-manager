@@ -131,14 +131,12 @@ const CreateImportPage = () => {
   const now = new Date();
   const dateTimeStr = `${String(now.getDate()).padStart(2, "0")}/${String(now.getMonth() + 1).padStart(2, "0")}/${now.getFullYear()} ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
 
-  const addToCart = useCallback((product: Product) => {
+  const addToCart = useCallback((product: { id: string; code: string; name: string; cost_price: number }) => {
     if (cart.some((c) => c.product_id === product.id)) return;
     setCart((prev) => [...prev, {
       product_id: product.id, product_code: product.code, product_name: product.name,
       quantity: 1, unit_cost: product.cost_price, item_discount: 0,
     }]);
-    setSearchTerm("");
-    setSearchFocused(false);
   }, [cart]);
 
   const updateField = useCallback((pid: string, field: keyof CartItem, value: number) => {
