@@ -109,6 +109,7 @@ export type Database = {
           discount: number
           id: string
           notes: string | null
+          status: string
           supplier_id: string | null
           total_amount: number
         }
@@ -119,6 +120,7 @@ export type Database = {
           discount?: number
           id?: string
           notes?: string | null
+          status?: string
           supplier_id?: string | null
           total_amount?: number
         }
@@ -129,6 +131,7 @@ export type Database = {
           discount?: number
           id?: string
           notes?: string | null
+          status?: string
           supplier_id?: string | null
           total_amount?: number
         }
@@ -138,6 +141,44 @@ export type Database = {
             columns: ["supplier_id"]
             isOneToOne: false
             referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_slips: {
+        Row: {
+          amount: number
+          code: string
+          created_at: string
+          id: string
+          import_order_id: string
+          notes: string | null
+          payment_method: string
+        }
+        Insert: {
+          amount?: number
+          code: string
+          created_at?: string
+          id?: string
+          import_order_id: string
+          notes?: string | null
+          payment_method?: string
+        }
+        Update: {
+          amount?: number
+          code?: string
+          created_at?: string
+          id?: string
+          import_order_id?: string
+          notes?: string | null
+          payment_method?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_slips_import_order_id_fkey"
+            columns: ["import_order_id"]
+            isOneToOne: false
+            referencedRelation: "import_orders"
             referencedColumns: ["id"]
           },
         ]
