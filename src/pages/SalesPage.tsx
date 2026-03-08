@@ -21,6 +21,7 @@ import { toast } from "sonner";
 import { Search, Trash2, Plus, Minus, ChevronsUpDown, Check, ShoppingCart } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CurrencyInput, formatCurrency } from "@/components/CurrencyInput";
+import { ProductSearchDropdown } from "@/components/ProductSearchDropdown";
 
 // ─── Types ───────────────────────────────────────────────────────
 type Customer = { id: string; code: string; name: string; phone: string | null };
