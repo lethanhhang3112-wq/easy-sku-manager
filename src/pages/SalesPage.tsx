@@ -228,7 +228,7 @@ const SalesPage = () => {
           },
         ];
       });
-      setSearchTerm("");
+      
     },
     [products]
   );
