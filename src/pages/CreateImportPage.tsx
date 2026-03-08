@@ -183,8 +183,7 @@ const CreateImportPage = () => {
 
   const submitMutation = useMutation({
     mutationFn: async () => {
-      const realCart = cart.filter((c) => !c.product_id.startsWith("dummy-"));
-      if (realCart.length === 0) throw new Error("Chưa có sản phẩm thực (bỏ sản phẩm demo)");
+      if (cart.length === 0) throw new Error("Chưa có sản phẩm trong phiếu nhập");
 
       const { data: order, error: orderError } = await supabase
         .from("import_orders")
