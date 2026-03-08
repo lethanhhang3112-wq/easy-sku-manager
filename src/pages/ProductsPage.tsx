@@ -117,6 +117,9 @@ const ProductsPage = () => {
                   <TableCell className="text-right font-medium">{p.stock_quantity}</TableCell>
                   <TableCell>
                     <div className="flex gap-1">
+                      <Button variant="ghost" size="icon" onClick={() => setLedgerProduct(p)}>
+                        <History className="h-4 w-4" />
+                      </Button>
                       <Button variant="ghost" size="icon" onClick={() => deleteMutation.mutate(p.id)}>
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
