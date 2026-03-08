@@ -100,6 +100,7 @@ function ProductInfoTab({ product, onSaved }: { product: Product; onSaved: () =>
   const [categoryId, setCategoryId] = useState(product.category_id || "");
   const [costPrice, setCostPrice] = useState(product.cost_price);
   const [salePrice, setSalePrice] = useState(product.sale_price);
+  const [stockQuantity, setStockQuantity] = useState(product.stock_quantity);
   const [categoryOpen, setCategoryOpen] = useState(false);
 
   useEffect(() => {
@@ -108,6 +109,7 @@ function ProductInfoTab({ product, onSaved }: { product: Product; onSaved: () =>
     setCategoryId(product.category_id || "");
     setCostPrice(product.cost_price);
     setSalePrice(product.sale_price);
+    setStockQuantity(product.stock_quantity);
   }, [product]);
 
   const { data: categories = [] } = useQuery({
