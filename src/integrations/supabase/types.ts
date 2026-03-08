@@ -103,23 +103,32 @@ export type Database = {
       }
       import_orders: {
         Row: {
+          amount_paid: number
           code: string
           created_at: string
+          discount: number
           id: string
+          notes: string | null
           supplier_id: string | null
           total_amount: number
         }
         Insert: {
+          amount_paid?: number
           code: string
           created_at?: string
+          discount?: number
           id?: string
+          notes?: string | null
           supplier_id?: string | null
           total_amount?: number
         }
         Update: {
+          amount_paid?: number
           code?: string
           created_at?: string
+          discount?: number
           id?: string
+          notes?: string | null
           supplier_id?: string | null
           total_amount?: number
         }
