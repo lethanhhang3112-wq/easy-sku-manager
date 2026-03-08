@@ -296,6 +296,7 @@ const SalesPage = () => {
           customer_id: customerId || null,
           total_amount: totalToPay,
           payment_method: paymentMethod,
+          created_at: orderDate.toISOString(),
         })
         .select()
         .single();
