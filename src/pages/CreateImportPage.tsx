@@ -448,7 +448,7 @@ const CreateImportPage = () => {
               {/* Cần trả NCC — prominent blue */}
               <div className="flex items-center justify-between py-1">
                 <span className="text-muted-foreground font-medium">Cần trả nhà cung cấp</span>
-                <span className="text-base font-bold text-primary">{fmt(amountToPay)}</span>
+                <span className="text-base font-bold text-primary">{formatCurrency(amountToPay)}</span>
               </div>
 
               {/* Tiền trả NCC */}
