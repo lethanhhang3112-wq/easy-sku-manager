@@ -109,6 +109,7 @@ export const ProductSearchDropdown = forwardRef<ProductSearchDropdownRef, Produc
         onFocus={() => setIsOpen(true)}
         className="pl-10 h-9"
         autoFocus={autoFocus}
+        ref={inputRef}
       />
       {showDropdown && (
         <div className="absolute z-50 top-full left-0 right-0 mt-1 border rounded-lg bg-popover shadow-lg max-h-64 overflow-y-auto">
