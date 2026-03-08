@@ -158,7 +158,7 @@ export const ProductSearchDropdown = forwardRef<ProductSearchDropdownRef, Produc
                   </span>
                 </button>
               );
-            }))
+            })
           )}
         </div>
       )}
