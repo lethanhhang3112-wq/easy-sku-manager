@@ -554,7 +554,7 @@ const SalesPage = () => {
 
           <div className="flex justify-between items-center">
             <span className="text-sm text-muted-foreground">Tiền thừa trả khách</span>
-            <span className="font-semibold text-green-600">{fmt(effectiveChange)}</span>
+            <span className="font-semibold text-success">{fmt(effectiveChange)}</span>
           </div>
 
           <div className="flex-1" />
