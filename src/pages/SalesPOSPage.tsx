@@ -236,11 +236,16 @@ const SalesPage = () => {
 
   const updateQty = useCallback((productId: string, qty: number) => {
     setCart((prev) =>
-      prev.map((c) =>
-        c.product_id === productId
-          ? { ...c, quantity: Math.min(Math.max(1, qty), c.max_stock) }
-          : c
-      )
+      prev.map((c) => {
+        if (c.product_id !== productId) return c;
+        const clamped = Math.min(Math.max(1, qty), c.max_stock);
+        if (qty > c.max_stock) {
+          toast.warning("Số lượng vượt quá tồn kho hiện tại!", {
+            description: `${c.product_name}: tồn kho ${c.max_stock}`,
+          });
+        }
+        return { ...c, quantity: clamped };
+      })
     );
   }, []);
 
