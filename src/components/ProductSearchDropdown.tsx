@@ -5,6 +5,8 @@ import { useDebounce } from "@/hooks/use-debounce";
 import { Input } from "@/components/ui/input";
 import { Search, Loader2 } from "lucide-react";
 import { formatCurrency } from "@/components/CurrencyInput";
+import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 type ProductResult = {
   id: string;
