@@ -464,7 +464,7 @@ const CreateImportPage = () => {
               {/* Tính vào công nợ */}
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">Tính vào công nợ</span>
-                <span className={cn("font-semibold text-sm", debt > 0 ? "text-destructive" : "text-foreground")}>{fmt(debt)}</span>
+                <span className={cn("font-semibold text-sm", debt > 0 ? "text-destructive" : "text-foreground")}>{formatCurrency(debt)}</span>
               </div>
 
               <div className="border-t border-border/50 my-1" />
