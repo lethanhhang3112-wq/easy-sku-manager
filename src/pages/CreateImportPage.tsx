@@ -106,12 +106,21 @@ const CreateImportPage = () => {
     },
   });
 
-  const { data: products = [] } = useQuery({
+  const { data: products = [], refetch: refetchProducts } = useQuery({
     queryKey: ["products"],
     queryFn: async () => {
       const { data, error } = await supabase.from("products").select("id, code, name, cost_price, stock_quantity").order("name");
       if (error) throw error;
       return data as Product[];
+    },
+  });
+
+  const { data: categories = [] } = useQuery({
+    queryKey: ["categories"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("categories").select("id, name").order("name");
+      if (error) throw error;
+      return data as { id: string; name: string }[];
     },
   });
 
