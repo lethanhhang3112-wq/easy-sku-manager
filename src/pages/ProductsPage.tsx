@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2 } from "lucide-react";
+import { AddProductModal } from "@/components/AddProductModal";
 
 type Product = {
   id: string;
@@ -54,6 +55,7 @@ const formatVND = (n: number) =>
 const ProductsPage = () => {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
+  const [addModalOpen, setAddModalOpen] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
   const [code, setCode] = useState("");
   const [name, setName] = useState("");
@@ -126,13 +128,7 @@ const ProductsPage = () => {
   });
 
   const openAdd = () => {
-    setEditing(null);
-    setCode("");
-    setName("");
-    setCategoryId("");
-    setCostPrice("");
-    setSalePrice("");
-    setOpen(true);
+    setAddModalOpen(true);
   };
 
   const openEdit = (p: Product) => {
@@ -249,6 +245,13 @@ const ProductsPage = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Reusable Add Product Modal */}
+      <AddProductModal
+        open={addModalOpen}
+        onOpenChange={setAddModalOpen}
+        onSuccess={() => queryClient.invalidateQueries({ queryKey: ["products"] })}
+      />
     </div>
   );
 };

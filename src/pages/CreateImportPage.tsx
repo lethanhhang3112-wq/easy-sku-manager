@@ -23,6 +23,7 @@ import { toast } from "sonner";
 import { Search, Plus, X, ChevronsUpDown, Check, PenLine, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CurrencyInput, formatCurrency } from "@/components/CurrencyInput";
+import { AddProductModal } from "@/components/AddProductModal";
 
 // ─── Types ───────────────────────────────────────────────────────
 type Supplier = { id: string; code: string; name: string; phone: string | null; address: string | null };
@@ -89,11 +90,6 @@ const CreateImportPage = () => {
   const [newSupplierAddress, setNewSupplierAddress] = useState("");
 
   const [addProductOpen, setAddProductOpen] = useState(false);
-  const [newProductCode, setNewProductCode] = useState("");
-  const [newProductName, setNewProductName] = useState("");
-  const [newProductCategoryId, setNewProductCategoryId] = useState("");
-  const [newProductCostPrice, setNewProductCostPrice] = useState(0);
-  const [newProductSalePrice, setNewProductSalePrice] = useState(0);
 
   useEffect(() => { generateImportCode().then(setCode); }, []);
 
@@ -189,44 +185,13 @@ const CreateImportPage = () => {
     onError: (e: any) => toast.error(e.message),
   });
 
-  const addProductMutation = useMutation({
-    mutationFn: async () => {
-      if (!newProductName.trim()) throw new Error("Tên hàng hóa không được để trống");
-      let productCode = newProductCode.trim();
-      if (!productCode) {
-        const { data: existing } = await supabase.from("products").select("code").order("code", { ascending: false }).limit(1);
-        let nextNum = 1;
-        if (existing && existing.length > 0) {
-          const parsed = parseInt(existing[0].code, 10);
-          if (!isNaN(parsed)) nextNum = parsed + 1;
-        }
-        productCode = String(nextNum).padStart(6, "0");
-      }
-      const { data, error } = await supabase.from("products").insert({
-        code: productCode,
-        name: newProductName.trim(),
-        category_id: newProductCategoryId || null,
-        cost_price: newProductCostPrice,
-        sale_price: newProductSalePrice,
-        stock_quantity: 0,
-      }).select().single();
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: (data) => {
-      refetchProducts();
-      setAddProductOpen(false);
-      setNewProductCode(""); setNewProductName(""); setNewProductCategoryId("");
-      setNewProductCostPrice(0); setNewProductSalePrice(0);
-      toast.success("Đã thêm hàng hóa mới");
-      // Add to cart immediately
-      setCart((prev) => [...prev, {
-        product_id: data.id, product_code: data.code, product_name: data.name,
-        quantity: 1, unit_cost: data.cost_price, item_discount: 0,
-      }]);
-    },
-    onError: (e: any) => toast.error(e.message),
-  });
+  const handleNewProduct = (product: any) => {
+    refetchProducts();
+    setCart((prev) => [...prev, {
+      product_id: product.id, product_code: product.code, product_name: product.name,
+      quantity: 1, unit_cost: product.cost_price, item_discount: 0,
+    }]);
+  };
 
   const submitMutation = useMutation({
     mutationFn: async () => {
@@ -572,55 +537,12 @@ const CreateImportPage = () => {
         </DialogContent>
       </Dialog>
 
-      {/* ── Quick Add Product Dialog ──────────────────────────── */}
-      <Dialog open={addProductOpen} onOpenChange={setAddProductOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader><DialogTitle>Thêm hàng hóa mới</DialogTitle></DialogHeader>
-          <div className="space-y-3">
-            <div>
-              <Label>Mã hàng hóa</Label>
-              <Input value={newProductCode} onChange={(e) => setNewProductCode(e.target.value)} placeholder="Mã tự động sinh nếu để trống" />
-            </div>
-            <div>
-              <Label>Tên hàng *</Label>
-              <Input value={newProductName} onChange={(e) => setNewProductName(e.target.value)} placeholder="Nhập tên hàng hóa" />
-            </div>
-            <div>
-              <Label>Nhóm hàng</Label>
-              <select
-                value={newProductCategoryId}
-                onChange={(e) => setNewProductCategoryId(e.target.value)}
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-              >
-                <option value="">-- Chọn nhóm hàng --</option>
-                {categories.map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-              </select>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label>Giá vốn *</Label>
-                <CurrencyInput value={newProductCostPrice} onChange={setNewProductCostPrice} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" />
-              </div>
-              <div>
-                <Label>Giá bán *</Label>
-                <CurrencyInput value={newProductSalePrice} onChange={setNewProductSalePrice} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" />
-              </div>
-            </div>
-            <div>
-              <Label>Tồn kho</Label>
-              <Input value="0" disabled className="bg-muted" />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setAddProductOpen(false)}>Hủy</Button>
-            <Button onClick={() => addProductMutation.mutate()} disabled={addProductMutation.isPending}>
-              {addProductMutation.isPending ? "Đang lưu..." : "Lưu"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* ── Quick Add Product Modal ─────────────────────────── */}
+      <AddProductModal
+        open={addProductOpen}
+        onOpenChange={setAddProductOpen}
+        onSuccess={handleNewProduct}
+      />
     </div>
   );
 };
