@@ -207,7 +207,12 @@ function ProductInfoTab({ product, onSaved }: { product: Product; onSaved: () =>
       </div>
       <div>
         <Label>Tồn kho</Label>
-        <Input value={product.stock_quantity} disabled className="bg-muted" />
+        <Input
+          type="number"
+          min={0}
+          value={stockQuantity}
+          onChange={(e) => setStockQuantity(Math.max(0, parseInt(e.target.value) || 0))}
+        />
       </div>
       <Button onClick={() => updateMutation.mutate()} disabled={!name.trim() || updateMutation.isPending} className="w-full">
         {updateMutation.isPending ? "Đang lưu..." : "Lưu thay đổi"}
