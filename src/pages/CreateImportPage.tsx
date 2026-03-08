@@ -20,7 +20,7 @@ import {
   Popover, PopoverContent, PopoverTrigger,
 } from "@/components/ui/popover";
 import { toast } from "sonner";
-import { Search, Plus, X, ChevronsUpDown, Check, PenLine } from "lucide-react";
+import { Search, Plus, X, ChevronsUpDown, Check, PenLine, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // ─── Types ───────────────────────────────────────────────────────
