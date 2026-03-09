@@ -92,10 +92,16 @@ export const ProductSearchDropdown = forwardRef<ProductSearchDropdownRef, Produc
     setIsOpen(false);
   };
 
+  const handleScan = (code: string) => {
+    setSearchTerm(code);
+    setIsOpen(true);
+  };
+
   const showDropdown = isOpen && searchTerm.trim().length > 0;
 
   return (
-    <div ref={containerRef} className={`relative ${className || ""}`}>
+    <div ref={containerRef} className={`relative flex gap-1.5 ${className || ""}`}>
+      <div className="relative flex-1">
       <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
       {isFetching && (
         <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground animate-spin" />
