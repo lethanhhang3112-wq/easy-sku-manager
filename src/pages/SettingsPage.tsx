@@ -26,7 +26,8 @@ import {
   Collapsible, CollapsibleContent, CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { toast } from "sonner";
-import { Store, Printer, Save, Plus, Pencil, Trash2, Star, ChevronDown, Copy, Code } from "lucide-react";
+import { Store, Printer, Save, Plus, Pencil, Trash2, Star, ChevronDown, Copy, Code, Barcode } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 
 // ─── Types ───────────────────────────────────────────────────────
