@@ -26,7 +26,8 @@ import {
   Collapsible, CollapsibleContent, CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { toast } from "sonner";
-import { Store, Printer, Save, Plus, Pencil, Trash2, Star, ChevronDown, Copy, Code } from "lucide-react";
+import { Store, Printer, Save, Plus, Pencil, Trash2, Star, ChevronDown, Copy, Code, Barcode } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 
 // ─── Types ───────────────────────────────────────────────────────
@@ -388,6 +389,13 @@ const SettingsPage = () => {
                   <div className="space-y-2">
                     <Label htmlFor="receipt-footer">Lời chào cuối hóa đơn</Label>
                     <Textarea id="receipt-footer" value={receiptFooter} onChange={(e) => setReceiptFooter(e.target.value)} placeholder="VD: Cảm ơn quý khách và hẹn gặp lại!" rows={2} />
+                  </div>
+                  <div className="border-t pt-4 mt-2 flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label className="flex items-center gap-2"><Barcode className="h-4 w-4" /> Quản lý mã vạch hàng hóa</Label>
+                      <p className="text-xs text-muted-foreground">Bật tính năng in tem mã vạch từ trang Hàng hóa.</p>
+                    </div>
+                    <Switch defaultChecked />
                   </div>
                   <Button onClick={() => saveSettingsMutation.mutate()} disabled={saveSettingsMutation.isPending}>
                     <Save className="mr-1.5 h-4 w-4" />

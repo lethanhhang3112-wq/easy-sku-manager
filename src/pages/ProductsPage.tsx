@@ -26,7 +26,7 @@ import {
 import { toast } from "sonner";
 import {
   Plus, Search, Filter, Trash2, FileDown, PanelLeftClose, PanelLeft,
-  MoreHorizontal, History, ToggleLeft, ToggleRight,
+  MoreHorizontal, History, ToggleLeft, ToggleRight, Barcode,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useDebounce } from "@/hooks/use-debounce";
@@ -34,6 +34,7 @@ import { formatCurrency, CurrencyInput } from "@/components/CurrencyInput";
 import { AddProductModal } from "@/components/AddProductModal";
 import { StockLedgerSheet } from "@/components/StockLedgerSheet";
 import * as XLSX from "xlsx";
+import { BarcodePrintDialog } from "@/components/BarcodePrintDialog";
 
 type Product = {
   id: string;
@@ -57,6 +58,7 @@ const ProductsPage = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [ledgerProduct, setLedgerProduct] = useState<Product | null>(null);
+  const [barcodeOpen, setBarcodeOpen] = useState(false);
 
   // Edit sheet
   const [editProduct, setEditProduct] = useState<Product | null>(null);
@@ -404,6 +406,13 @@ const ProductsPage = () => {
                 <ToggleLeft className="mr-1.5 h-3.5 w-3.5" /> Ngừng KD
               </Button>
               <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setBarcodeOpen(true)}
+              >
+                <Barcode className="mr-1.5 h-3.5 w-3.5" /> In tem mã
+              </Button>
+              <Button
                 variant="destructive"
                 size="sm"
                 onClick={() => setBulkDeleteOpen(true)}
@@ -623,6 +632,18 @@ const ProductsPage = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <BarcodePrintDialog
+        open={barcodeOpen}
+        onOpenChange={setBarcodeOpen}
+        products={products.filter((p) => selectedIds.has(p.id)).map((p) => ({
+          id: p.id,
+          code: p.code,
+          name: p.name,
+          sale_price: p.sale_price,
+          stock_quantity: p.stock_quantity,
+        }))}
+      />
     </div>
   );
 };
