@@ -62,7 +62,7 @@ type DetailItem = {
   product_id: string;
   quantity: number;
   unit_cost: number;
-  products: { code: string; name: string } | null;
+  products: { code: string; name: string; sale_price: number } | null;
 };
 
 type PaymentSlip = {
