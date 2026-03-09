@@ -296,3 +296,87 @@ export const SalesOrderDetailRow = ({
     </tr>
   );
 };
+
+// ─── Payment History Sub-component ───────────────────────────
+type PaymentSlip = {
+  id: string;
+  code: string;
+  created_at: string;
+  creator: string;
+  total_value: number;
+  payment_method: string;
+  status: string;
+  amount_collected: number;
+};
+
+const PaymentHistoryTable = ({ order }: { order: SalesOrder }) => {
+  // Mock data based on the actual order — in production, fetch from payment_slips table
+  const paymentSlips: PaymentSlip[] = [
+    {
+      id: "1",
+      code: `PT-${order.code}`,
+      created_at: order.created_at,
+      creator: "Admin",
+      total_value: order.total_amount,
+      payment_method: order.payment_method === "cash" ? "Tiền mặt" : "Chuyển khoản",
+      status: "Đã thanh toán",
+      amount_collected: order.total_amount,
+    },
+  ];
+
+  if (paymentSlips.length === 0) {
+    return (
+      <div className="py-12 text-center">
+        <p className="text-muted-foreground text-sm">
+          Hóa đơn này chưa có lịch sử thanh toán
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="py-4">
+      <div className="border rounded-lg overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-muted/40">
+              <TableHead className="text-xs font-semibold">Mã phiếu</TableHead>
+              <TableHead className="text-xs font-semibold">Thời gian</TableHead>
+              <TableHead className="text-xs font-semibold">Người tạo</TableHead>
+              <TableHead className="text-xs font-semibold text-right">Giá trị phiếu</TableHead>
+              <TableHead className="text-xs font-semibold">Phương thức</TableHead>
+              <TableHead className="text-xs font-semibold">Trạng thái</TableHead>
+              <TableHead className="text-xs font-semibold text-right">Tiền thu/chi</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {paymentSlips.map((slip) => (
+              <TableRow key={slip.id}>
+                <TableCell className="text-sm text-primary hover:underline cursor-pointer font-mono">
+                  {slip.code}
+                </TableCell>
+                <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
+                  {format(new Date(slip.created_at), "dd/MM/yyyy HH:mm")}
+                </TableCell>
+                <TableCell className="text-sm">{slip.creator}</TableCell>
+                <TableCell className="text-sm text-right font-medium">{fmt(slip.total_value)}</TableCell>
+                <TableCell className="text-sm">{slip.payment_method}</TableCell>
+                <TableCell>
+                  <Badge className={cn(
+                    "border-0 shadow-none",
+                    slip.status === "Đã thanh toán"
+                      ? "bg-green-100 text-green-700 hover:bg-green-200"
+                      : "bg-muted text-muted-foreground"
+                  )}>
+                    {slip.status}
+                  </Badge>
+                </TableCell>
+                <TableCell className="text-sm text-right font-medium">{fmt(slip.amount_collected)}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    </div>
+  );
+};
