@@ -29,6 +29,7 @@ import {
   MoreHorizontal, History, ToggleLeft, ToggleRight, Barcode,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { BarcodeScanButton } from "@/components/BarcodeScannerDialog";
 import { useDebounce } from "@/hooks/use-debounce";
 import { formatCurrency, CurrencyInput } from "@/components/CurrencyInput";
 import { AddProductModal } from "@/components/AddProductModal";
