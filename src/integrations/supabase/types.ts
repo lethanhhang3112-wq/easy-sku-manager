@@ -377,6 +377,39 @@ export type Database = {
           },
         ]
       }
+      store_settings: {
+        Row: {
+          created_at: string
+          id: number
+          print_paper_size: string
+          receipt_footer_text: string
+          store_address: string
+          store_name: string
+          store_phone: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          print_paper_size?: string
+          receipt_footer_text?: string
+          store_address?: string
+          store_name?: string
+          store_phone?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          print_paper_size?: string
+          receipt_footer_text?: string
+          store_address?: string
+          store_name?: string
+          store_phone?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       suppliers: {
         Row: {
           address: string | null
