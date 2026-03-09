@@ -108,41 +108,53 @@ export const BarcodePrintModal = ({
     const pageWidth = selectedLayout.paperWidth || "210mm";
     const pageHeight = selectedLayout.paperHeight || "297mm";
 
+    const cols = selectedLayout.cols;
+
     styleEl.textContent = `
       @media print {
         @page {
           size: ${pageWidth} ${pageHeight || "auto"};
           margin: 0;
         }
+        html, body {
+          height: auto !important;
+          overflow: visible !important;
+          margin: 0 !important;
+          padding: 0 !important;
+        }
         body * { visibility: hidden !important; }
         #barcode-print-area,
         #barcode-print-area * { visibility: visible !important; }
         #barcode-print-area {
-          position: fixed;
+          position: absolute !important;
           left: 0;
           top: 0;
           width: ${pageWidth};
-          padding: 0 !important;
+          height: auto !important;
+          overflow: visible !important;
+          padding: ${isXprinter ? "0" : "2mm"} !important;
           margin: 0 !important;
-          gap: 0 !important;
-          ${isXprinter ? `
-            display: grid !important;
-            grid-template-columns: repeat(2, 1fr) !important;
-          ` : ""}
+          display: grid !important;
+          grid-template-columns: repeat(${cols}, 1fr) !important;
+          gap: ${isXprinter ? "0" : "1mm"} !important;
         }
         #barcode-print-area > div {
           border: none !important;
-          page-break-inside: avoid;
+          break-inside: avoid !important;
+          page-break-inside: avoid !important;
+          page-break-after: auto !important;
+          overflow: visible !important;
+          display: flex !important;
+          flex-direction: column !important;
+          align-items: center !important;
+          justify-content: center !important;
           ${isXprinter ? `
             width: ${selectedLayout.labelWidth};
             height: ${selectedLayout.labelHeight};
-            overflow: hidden;
-            display: flex !important;
-            flex-direction: column !important;
-            align-items: center !important;
-            justify-content: center !important;
             padding: 1mm !important;
-          ` : ""}
+          ` : `
+            padding: 1.5mm !important;
+          `}
         }
       }
     `;
