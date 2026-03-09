@@ -695,7 +695,7 @@ const ImportsPage = () => {
                           </SelectContent>
                         </Select>
                       ) : (
-                        <p className="text-sm">{selectedOrder.suppliers?.name || "—"}</p>
+                        <p className="text-sm">{selectedOrder.suppliers?.name || "Khách lẻ"}</p>
                       )}
                     </div>
                   </div>
