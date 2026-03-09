@@ -26,7 +26,7 @@ import {
 import { toast } from "sonner";
 import {
   Plus, Search, Filter, Trash2, FileDown, PanelLeftClose, PanelLeft,
-  MoreHorizontal, History, ToggleLeft, ToggleRight,
+  MoreHorizontal, History, ToggleLeft, ToggleRight, Barcode,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useDebounce } from "@/hooks/use-debounce";
