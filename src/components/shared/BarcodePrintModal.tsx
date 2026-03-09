@@ -55,6 +55,9 @@ export const BarcodePrintModal = ({
   const [layout, setLayout] = useState("3");
   const printRef = useRef<HTMLDivElement>(null);
 
+  // Stabilize initialProducts to avoid infinite useEffect loops
+  const productsKey = initialProducts.map((p) => `${p.id}:${p.defaultPrintQuantity ?? 1}`).join(",");
+
   useEffect(() => {
     if (isOpen && initialProducts.length > 0) {
       setItems(
@@ -65,7 +68,8 @@ export const BarcodePrintModal = ({
       );
       setStep("quantity");
     }
-  }, [isOpen, initialProducts]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, productsKey]);
 
   const updateQty = (id: string, qty: number) => {
     setItems((prev) =>
