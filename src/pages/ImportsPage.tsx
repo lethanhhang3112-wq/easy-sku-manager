@@ -534,52 +534,89 @@ const ImportsPage = () => {
         <div className="flex-1 overflow-auto">
           <Table>
             <TableHeader>
-              <TableRow className="bg-muted/40">
+              <TableRow className="bg-muted/50">
+                <TableHead className="w-10">
+                  <Checkbox
+                    checked={filteredOrders.length > 0 && selectedIds.size === filteredOrders.length}
+                    onCheckedChange={() => {
+                      if (selectedIds.size === filteredOrders.length) setSelectedIds(new Set());
+                      else setSelectedIds(new Set(filteredOrders.map((o) => o.id)));
+                    }}
+                  />
+                </TableHead>
+                <TableHead className="w-10"></TableHead>
                 <TableHead className="cursor-pointer select-none" onClick={() => toggleSort("code")}>
-                  Mã phiếu <SortIcon field="code" />
+                  Mã nhập hàng <SortIcon field="code" />
                 </TableHead>
-                <TableHead>Nhà cung cấp</TableHead>
-                <TableHead className="cursor-pointer select-none text-right" onClick={() => toggleSort("total_amount")}>
-                  Tổng tiền <SortIcon field="total_amount" />
-                </TableHead>
-                <TableHead>Trạng thái</TableHead>
                 <TableHead className="cursor-pointer select-none" onClick={() => toggleSort("created_at")}>
                   Thời gian <SortIcon field="created_at" />
                 </TableHead>
+                <TableHead>Mã NCC</TableHead>
+                <TableHead>Nhà cung cấp</TableHead>
+                <TableHead className="text-right">Tổng số lượng</TableHead>
+                <TableHead className="text-right">SL mặt hàng</TableHead>
+                <TableHead className="cursor-pointer select-none text-right" onClick={() => toggleSort("total_amount")}>
+                  Tổng tiền hàng <SortIcon field="total_amount" />
+                </TableHead>
+                <TableHead>Ghi chú</TableHead>
+                <TableHead>Trạng thái</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading ? (
                 Array.from({ length: 5 }).map((_, i) => (
                   <TableRow key={i}>
-                    {Array.from({ length: 5 }).map((_, j) => (
+                    {Array.from({ length: 11 }).map((_, j) => (
                       <TableCell key={j}><Skeleton className="h-4 w-full" /></TableCell>
                     ))}
                   </TableRow>
                 ))
               ) : filteredOrders.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-12 text-muted-foreground">
+                  <TableCell colSpan={11} className="text-center py-12 text-muted-foreground">
                     Không tìm thấy phiếu nhập nào
                   </TableCell>
                 </TableRow>
               ) : (
                 filteredOrders.map((o) => {
                   const status = STATUS_MAP[o.status] || STATUS_MAP.completed;
+                  const items = o.import_order_items || [];
+                  const totalQty = items.reduce((sum, i) => sum + i.quantity, 0);
+                  const totalItems = items.length;
+                  const isStarred = starredIds.has(o.id);
                   return (
                     <TableRow
                       key={o.id}
                       className="cursor-pointer hover:bg-accent/50"
                       onClick={() => openDetail(o)}
                     >
+                      <TableCell onClick={(e) => e.stopPropagation()}>
+                        <Checkbox
+                          checked={selectedIds.has(o.id)}
+                          onCheckedChange={() => {
+                            setSelectedIds(prev => {
+                              const next = new Set(prev);
+                              if (next.has(o.id)) next.delete(o.id); else next.add(o.id);
+                              return next;
+                            });
+                          }}
+                        />
+                      </TableCell>
+                      <TableCell onClick={(e) => { e.stopPropagation(); setStarredIds(prev => { const next = new Set(prev); if (next.has(o.id)) next.delete(o.id); else next.add(o.id); return next; }); }}>
+                        <Star className={cn("h-4 w-4 transition-colors", isStarred ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground/40 hover:text-yellow-400")} />
+                      </TableCell>
                       <TableCell className="font-mono text-primary">{o.code}</TableCell>
+                      <TableCell className="text-muted-foreground text-sm whitespace-nowrap">
+                        {format(new Date(o.created_at), "dd/MM/yyyy HH:mm")}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground text-sm">{o.suppliers?.code || "—"}</TableCell>
                       <TableCell>{o.suppliers?.name || "—"}</TableCell>
+                      <TableCell className="text-right font-medium">{totalQty}</TableCell>
+                      <TableCell className="text-right text-muted-foreground">{totalItems}</TableCell>
                       <TableCell className="text-right font-medium">{fmt(o.total_amount)}</TableCell>
+                      <TableCell className="text-muted-foreground text-sm max-w-[150px] truncate">{o.notes || "—"}</TableCell>
                       <TableCell>
                         <Badge variant={status.variant}>{status.label}</Badge>
-                      </TableCell>
-                      <TableCell className="text-muted-foreground text-sm">
-                        {format(new Date(o.created_at), "dd/MM/yyyy HH:mm")}
                       </TableCell>
                     </TableRow>
                   );
