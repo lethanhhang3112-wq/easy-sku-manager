@@ -571,24 +571,28 @@ const SalesPage = () => {
         <div className="flex-1 overflow-auto">
           <Table>
             <TableHeader>
-              <TableRow className="bg-muted/40">
+              <TableRow className="bg-muted/50">
                 <TableHead className="w-10">
                   <Checkbox
                     checked={filteredOrders.length > 0 && selectedIds.size === filteredOrders.length}
                     onCheckedChange={toggleSelectAll}
                   />
                 </TableHead>
-                <TableHead className="cursor-pointer select-none" onClick={() => toggleSort("code")}>
-                  Mã hóa đơn <SortIcon field="code" />
-                </TableHead>
+                <TableHead className="w-10"></TableHead>
                 <TableHead className="cursor-pointer select-none" onClick={() => toggleSort("created_at")}>
                   Thời gian <SortIcon field="created_at" />
                 </TableHead>
-                <TableHead>Khách hàng</TableHead>
-                <TableHead>Phương thức</TableHead>
-                <TableHead className="cursor-pointer select-none text-right" onClick={() => toggleSort("total_amount")}>
-                  Tổng tiền <SortIcon field="total_amount" />
+                <TableHead className="cursor-pointer select-none" onClick={() => toggleSort("code")}>
+                  Mã hóa đơn <SortIcon field="code" />
                 </TableHead>
+                <TableHead>Mã KH</TableHead>
+                <TableHead>Khách hàng</TableHead>
+                <TableHead className="cursor-pointer select-none text-right" onClick={() => toggleSort("total_amount")}>
+                  Tổng tiền hàng <SortIcon field="total_amount" />
+                </TableHead>
+                <TableHead className="text-right">Giảm giá</TableHead>
+                <TableHead className="text-right">Tổng sau giảm giá</TableHead>
+                <TableHead className="text-right">Khách đã trả</TableHead>
                 <TableHead>Trạng thái</TableHead>
               </TableRow>
             </TableHeader>
@@ -596,20 +600,24 @@ const SalesPage = () => {
               {isLoading ? (
                 Array.from({ length: 5 }).map((_, i) => (
                   <TableRow key={i}>
-                    {Array.from({ length: 7 }).map((_, j) => (
+                    {Array.from({ length: 11 }).map((_, j) => (
                       <TableCell key={j}><Skeleton className="h-4 w-full" /></TableCell>
                     ))}
                   </TableRow>
                 ))
               ) : filteredOrders.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-12 text-muted-foreground">
+                  <TableCell colSpan={11} className="text-center py-12 text-muted-foreground">
                     {debouncedSearch ? "Không tìm thấy hóa đơn nào" : "Chưa có hóa đơn nào"}
                   </TableCell>
                 </TableRow>
               ) : (
                 filteredOrders.map((o) => {
                   const status = STATUS_MAP[o.status] || STATUS_MAP.completed;
+                  const discount = 0; // sales_orders doesn't have discount column yet
+                  const totalAfterDiscount = o.total_amount - discount;
+                  const customerPaid = o.total_amount; // sales_orders doesn't have amount_paid column yet
+                  const isStarred = starredIds.has(o.id);
                   return (
                     <TableRow
                       key={o.id}
@@ -622,15 +630,19 @@ const SalesPage = () => {
                           onCheckedChange={() => toggleSelect(o.id)}
                         />
                       </TableCell>
-                      <TableCell className="font-mono text-primary">{o.code}</TableCell>
-                      <TableCell className="text-muted-foreground text-sm">
+                      <TableCell onClick={(e) => { e.stopPropagation(); setStarredIds(prev => { const next = new Set(prev); if (next.has(o.id)) next.delete(o.id); else next.add(o.id); return next; }); }}>
+                        <Star className={cn("h-4 w-4 transition-colors", isStarred ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground/40 hover:text-yellow-400")} />
+                      </TableCell>
+                      <TableCell className="text-muted-foreground text-sm whitespace-nowrap">
                         {format(new Date(o.created_at), "dd/MM/yyyy HH:mm")}
                       </TableCell>
+                      <TableCell className="font-mono text-primary">{o.code}</TableCell>
+                      <TableCell className="text-muted-foreground text-sm">{o.customers?.code || "—"}</TableCell>
                       <TableCell>{o.customers?.name || "Khách lẻ"}</TableCell>
-                      <TableCell>
-                        {o.payment_method === "cash" ? "Tiền mặt" : "Chuyển khoản"}
-                      </TableCell>
                       <TableCell className="text-right font-medium">{fmt(o.total_amount)}</TableCell>
+                      <TableCell className="text-right text-muted-foreground">{fmt(discount)}</TableCell>
+                      <TableCell className="text-right font-medium">{fmt(totalAfterDiscount)}</TableCell>
+                      <TableCell className="text-right font-medium text-primary">{fmt(customerPaid)}</TableCell>
                       <TableCell>
                         <Badge variant={status.variant}>{status.label}</Badge>
                       </TableCell>
