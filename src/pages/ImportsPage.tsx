@@ -53,7 +53,8 @@ type ImportOrder = {
   discount: number;
   amount_paid: number;
   notes: string | null;
-  suppliers: { name: string } | null;
+  suppliers: { name: string; code: string } | null;
+  import_order_items: { id: string; quantity: number }[];
 };
 
 type DetailItem = {
