@@ -139,7 +139,7 @@ const SalesPage = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("sales_orders")
-        .select("*, customers(name)")
+        .select("*, customers(code, name)")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data as SalesOrder[];
