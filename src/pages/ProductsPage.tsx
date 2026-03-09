@@ -632,6 +632,18 @@ const ProductsPage = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <BarcodePrintDialog
+        open={barcodeOpen}
+        onOpenChange={setBarcodeOpen}
+        products={products.filter((p) => selectedIds.has(p.id)).map((p) => ({
+          id: p.id,
+          code: p.code,
+          name: p.name,
+          sale_price: p.sale_price,
+          stock_quantity: p.stock_quantity,
+        }))}
+      />
     </div>
   );
 };
