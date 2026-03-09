@@ -142,6 +142,9 @@ const ImportsPage = () => {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [starredIds, setStarredIds] = useState<Set<string>>(new Set());
 
+  // Barcode print
+  const [isBarcodeModalOpen, setIsBarcodeModalOpen] = useState(false);
+
   // ─── Queries ─────────────────────────────────────────────────
   const { data: importOrders = [], isLoading } = useQuery({
     queryKey: ["import_orders"],
