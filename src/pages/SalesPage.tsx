@@ -36,7 +36,7 @@ import { toast } from "sonner";
 import {
   Plus, Search, Filter, ChevronUp, ChevronDown, CalendarIcon,
   Printer, Copy, FileDown, Ban, Save, PanelLeftClose, PanelLeft,
-  MoreHorizontal, CheckSquare,
+  MoreHorizontal, CheckSquare, Star,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useDebounce } from "@/hooks/use-debounce";
