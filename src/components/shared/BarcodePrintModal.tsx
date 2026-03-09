@@ -220,7 +220,7 @@ export const BarcodePrintModal = ({
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="z-[70]">
                   {LAYOUTS.map((l) => (
                     <SelectItem key={l.value} value={l.value}>
                       {l.label}
