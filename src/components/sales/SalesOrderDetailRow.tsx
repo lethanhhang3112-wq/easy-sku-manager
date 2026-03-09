@@ -254,24 +254,7 @@ export const SalesOrderDetailRow = ({
 
             {/* ═══ PAYMENT HISTORY TAB ═══ */}
             <TabsContent value="payment-history" className="mt-0 px-5 pb-4">
-              <div className="py-4 space-y-3">
-                <div className="border rounded-lg p-4 space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Phương thức</span>
-                    <span className="font-medium">
-                      {order.payment_method === "cash" ? "Tiền mặt" : "Chuyển khoản"}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Tổng thanh toán</span>
-                    <span className="font-semibold">{fmt(order.total_amount)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Thời gian</span>
-                    <span>{format(new Date(order.created_at), "dd/MM/yyyy HH:mm:ss")}</span>
-                  </div>
-                </div>
-              </div>
+              <PaymentHistoryTable order={order} />
             </TabsContent>
           </Tabs>
 
