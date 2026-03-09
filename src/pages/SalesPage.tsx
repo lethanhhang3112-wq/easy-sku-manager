@@ -129,6 +129,9 @@ const SalesPage = () => {
 
   // Inline edit
   const [editNotes, setEditNotes] = useState("");
+  
+  // Star/favorite (local state)
+  const [starredIds, setStarredIds] = useState<Set<string>>(new Set());
 
   // ─── Queries ─────────────────────────────────────────────────
   const { data: salesOrders = [], isLoading } = useQuery({
