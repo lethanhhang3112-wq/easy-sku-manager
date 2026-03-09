@@ -73,6 +73,8 @@ export const ProductSearchDropdown = forwardRef<ProductSearchDropdownRef, Produc
       if (error) throw error;
       const products = (data as ProductResult[]) || [];
       let filtered = products.filter((p) => !excludeIds.includes(p.id));
+      // Hide inactive products from search
+      filtered = filtered.filter((p) => (p as any).status !== "inactive");
       if (onlyInStock) {
         filtered = filtered.filter((p) => p.stock_quantity > 0);
       }
