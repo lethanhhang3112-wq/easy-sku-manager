@@ -655,7 +655,7 @@ const ProductsPage = () => {
       <BarcodePrintDialog
         open={barcodeOpen}
         onOpenChange={setBarcodeOpen}
-        products={products.filter((p) => selectedIds.has(p.id)).map((p) => ({
+        products={barcodeProducts.map((p) => ({
           id: p.id,
           code: p.code,
           name: p.name,
