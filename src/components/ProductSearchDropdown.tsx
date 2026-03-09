@@ -167,6 +167,20 @@ export const ProductSearchDropdown = forwardRef<ProductSearchDropdownRef, Produc
           )}
         </div>
       )}
+      </div>
+      <button
+        type="button"
+        onClick={() => setScannerOpen(true)}
+        className="h-9 w-9 shrink-0 inline-flex items-center justify-center rounded-md border border-input bg-background hover:bg-accent transition-colors"
+        title="Quét mã vạch"
+      >
+        <ScanLine className="h-4 w-4" />
+      </button>
+      <BarcodeScannerDialog
+        open={scannerOpen}
+        onOpenChange={setScannerOpen}
+        onScan={handleScan}
+      />
     </div>
   );
 });
