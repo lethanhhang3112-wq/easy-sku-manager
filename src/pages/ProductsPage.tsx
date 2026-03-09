@@ -58,6 +58,7 @@ const ProductsPage = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [ledgerProduct, setLedgerProduct] = useState<Product | null>(null);
+  const [barcodeOpen, setBarcodeOpen] = useState(false);
 
   // Edit sheet
   const [editProduct, setEditProduct] = useState<Product | null>(null);
