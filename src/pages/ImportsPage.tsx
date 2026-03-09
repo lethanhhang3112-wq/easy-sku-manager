@@ -146,7 +146,7 @@ const ImportsPage = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("import_orders")
-        .select("*, suppliers(name)")
+        .select("*, suppliers(code, name), import_order_items(id, quantity)")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data as ImportOrder[];
