@@ -98,7 +98,7 @@ export const BarcodePrintDialog = ({
   const totalLabels = items.reduce((s, i) => s + i.print_qty, 0);
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         className={cn(
           "p-0 flex flex-col",
