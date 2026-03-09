@@ -20,18 +20,21 @@ export type Database = {
           description: string | null
           id: string
           name: string
+          updated_at: string
         }
         Insert: {
           created_at?: string
           description?: string | null
           id?: string
           name: string
+          updated_at?: string
         }
         Update: {
           created_at?: string
           description?: string | null
           id?: string
           name?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -41,18 +44,21 @@ export type Database = {
           description: string | null
           id: string
           name: string
+          updated_at: string
         }
         Insert: {
           created_at?: string
           description?: string | null
           id?: string
           name: string
+          updated_at?: string
         }
         Update: {
           created_at?: string
           description?: string | null
           id?: string
           name?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -66,6 +72,9 @@ export type Database = {
           name: string
           phone: string | null
           status: string
+          total_debt: number
+          total_spend: number
+          updated_at: string
         }
         Insert: {
           address?: string | null
@@ -76,6 +85,9 @@ export type Database = {
           name: string
           phone?: string | null
           status?: string
+          total_debt?: number
+          total_spend?: number
+          updated_at?: string
         }
         Update: {
           address?: string | null
@@ -86,6 +98,9 @@ export type Database = {
           name?: string
           phone?: string | null
           status?: string
+          total_debt?: number
+          total_spend?: number
+          updated_at?: string
         }
         Relationships: [
           {
@@ -103,6 +118,7 @@ export type Database = {
           import_order_id: string
           product_id: string
           quantity: number
+          total_cost: number | null
           unit_cost: number
         }
         Insert: {
@@ -110,6 +126,7 @@ export type Database = {
           import_order_id: string
           product_id: string
           quantity?: number
+          total_cost?: number | null
           unit_cost?: number
         }
         Update: {
@@ -117,6 +134,7 @@ export type Database = {
           import_order_id?: string
           product_id?: string
           quantity?: number
+          total_cost?: number | null
           unit_cost?: number
         }
         Relationships: [
@@ -139,36 +157,45 @@ export type Database = {
       import_orders: {
         Row: {
           amount_paid: number
+          branch_name: string
           code: string
           created_at: string
+          created_by: string
           discount: number
           id: string
           notes: string | null
           status: string
           supplier_id: string | null
           total_amount: number
+          updated_at: string
         }
         Insert: {
           amount_paid?: number
+          branch_name?: string
           code: string
           created_at?: string
+          created_by?: string
           discount?: number
           id?: string
           notes?: string | null
           status?: string
           supplier_id?: string | null
           total_amount?: number
+          updated_at?: string
         }
         Update: {
           amount_paid?: number
+          branch_name?: string
           code?: string
           created_at?: string
+          created_by?: string
           discount?: number
           id?: string
           notes?: string | null
           status?: string
           supplier_id?: string | null
           total_amount?: number
+          updated_at?: string
         }
         Relationships: [
           {
@@ -186,27 +213,42 @@ export type Database = {
           code: string
           created_at: string
           id: string
-          import_order_id: string
+          import_order_id: string | null
           notes: string | null
           payment_method: string
+          reference_id: string | null
+          target_id: string | null
+          target_type: string
+          type: string
+          updated_at: string
         }
         Insert: {
           amount?: number
           code: string
           created_at?: string
           id?: string
-          import_order_id: string
+          import_order_id?: string | null
           notes?: string | null
           payment_method?: string
+          reference_id?: string | null
+          target_id?: string | null
+          target_type?: string
+          type?: string
+          updated_at?: string
         }
         Update: {
           amount?: number
           code?: string
           created_at?: string
           id?: string
-          import_order_id?: string
+          import_order_id?: string | null
           notes?: string | null
           payment_method?: string
+          reference_id?: string | null
+          target_id?: string | null
+          target_type?: string
+          type?: string
+          updated_at?: string
         }
         Relationships: [
           {
@@ -262,6 +304,7 @@ export type Database = {
           sale_price: number
           status: string
           stock_quantity: number
+          updated_at: string
         }
         Insert: {
           category_id?: string | null
@@ -273,6 +316,7 @@ export type Database = {
           sale_price?: number
           status?: string
           stock_quantity?: number
+          updated_at?: string
         }
         Update: {
           category_id?: string | null
@@ -284,6 +328,7 @@ export type Database = {
           sale_price?: number
           status?: string
           stock_quantity?: number
+          updated_at?: string
         }
         Relationships: [
           {
@@ -297,21 +342,30 @@ export type Database = {
       }
       sales_order_items: {
         Row: {
+          discount: number
+          final_price: number | null
           id: string
+          notes: string | null
           product_id: string
           quantity: number
           sales_order_id: string
           unit_price: number
         }
         Insert: {
+          discount?: number
+          final_price?: number | null
           id?: string
+          notes?: string | null
           product_id: string
           quantity?: number
           sales_order_id: string
           unit_price?: number
         }
         Update: {
+          discount?: number
+          final_price?: number | null
           id?: string
+          notes?: string | null
           product_id?: string
           quantity?: number
           sales_order_id?: string
@@ -336,31 +390,49 @@ export type Database = {
       }
       sales_orders: {
         Row: {
+          branch_name: string
           code: string
           created_at: string
+          created_by: string
           customer_id: string | null
+          discount: number
           id: string
+          notes: string | null
           payment_method: string
           status: string
+          subtotal: number
           total_amount: number
+          updated_at: string
         }
         Insert: {
+          branch_name?: string
           code: string
           created_at?: string
+          created_by?: string
           customer_id?: string | null
+          discount?: number
           id?: string
+          notes?: string | null
           payment_method?: string
           status?: string
+          subtotal?: number
           total_amount?: number
+          updated_at?: string
         }
         Update: {
+          branch_name?: string
           code?: string
           created_at?: string
+          created_by?: string
           customer_id?: string | null
+          discount?: number
           id?: string
+          notes?: string | null
           payment_method?: string
           status?: string
+          subtotal?: number
           total_amount?: number
+          updated_at?: string
         }
         Relationships: [
           {
@@ -381,6 +453,7 @@ export type Database = {
           quantity: number
           type: string
           unit_price: number
+          updated_at: string
         }
         Insert: {
           created_at?: string
@@ -390,6 +463,7 @@ export type Database = {
           quantity: number
           type: string
           unit_price?: number
+          updated_at?: string
         }
         Update: {
           created_at?: string
@@ -399,6 +473,7 @@ export type Database = {
           quantity?: number
           type?: string
           unit_price?: number
+          updated_at?: string
         }
         Relationships: [
           {
@@ -417,6 +492,7 @@ export type Database = {
           print_paper_size: string
           receipt_footer_text: string
           store_address: string
+          store_logo_url: string | null
           store_name: string
           store_phone: string
           updated_at: string
@@ -427,6 +503,7 @@ export type Database = {
           print_paper_size?: string
           receipt_footer_text?: string
           store_address?: string
+          store_logo_url?: string | null
           store_name?: string
           store_phone?: string
           updated_at?: string
@@ -437,6 +514,7 @@ export type Database = {
           print_paper_size?: string
           receipt_footer_text?: string
           store_address?: string
+          store_logo_url?: string | null
           store_name?: string
           store_phone?: string
           updated_at?: string
@@ -456,6 +534,8 @@ export type Database = {
           phone: string | null
           status: string
           tax_code: string | null
+          total_debt: number
+          updated_at: string
         }
         Insert: {
           address?: string | null
@@ -469,6 +549,8 @@ export type Database = {
           phone?: string | null
           status?: string
           tax_code?: string | null
+          total_debt?: number
+          updated_at?: string
         }
         Update: {
           address?: string | null
@@ -482,6 +564,8 @@ export type Database = {
           phone?: string | null
           status?: string
           tax_code?: string | null
+          total_debt?: number
+          updated_at?: string
         }
         Relationships: []
       }
@@ -502,6 +586,7 @@ export type Database = {
           sale_price: number
           status: string
           stock_quantity: number
+          updated_at: string
         }[]
         SetofOptions: {
           from: "*"
