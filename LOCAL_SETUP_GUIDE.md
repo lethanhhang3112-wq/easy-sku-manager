@@ -238,4 +238,161 @@ npm install
 
 ---
 
+## 🌐 7. Deploy lên Production
+
+### Lựa chọn A — Deploy lên Vercel
+
+#### Bước 7A.1 — Chuẩn bị
+
+1. Tạo tài khoản tại [vercel.com](https://vercel.com/) (miễn phí)
+2. Đẩy mã nguồn lên GitHub, GitLab hoặc Bitbucket
+
+#### Bước 7A.2 — Import dự án
+
+1. Đăng nhập Vercel → bấm **"Add New…"** → **"Project"**
+2. Chọn repository chứa mã nguồn
+3. Vercel sẽ tự nhận diện framework là **Vite**
+
+#### Bước 7A.3 — Cấu hình Environment Variables
+
+Trong màn hình cấu hình, thêm biến môi trường:
+
+| Name | Value |
+|---|---|
+| `VITE_SUPABASE_URL` | *(URL Supabase của bạn)* |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | *(Anon key của bạn)* |
+
+> ⚠️ **Bắt buộc** phải thêm biến môi trường trước khi deploy, nếu không app sẽ hiện màn hình trắng.
+
+#### Bước 7A.4 — Cấu hình Build
+
+Vercel thường tự nhận diện đúng, nhưng hãy kiểm tra:
+
+| Cài đặt | Giá trị |
+|---|---|
+| **Framework Preset** | Vite |
+| **Build Command** | `npm run build` |
+| **Output Directory** | `dist` |
+| **Install Command** | `npm install` |
+
+#### Bước 7A.5 — Deploy
+
+Bấm **"Deploy"** và đợi 1–2 phút. Sau khi hoàn tất, Vercel sẽ cung cấp URL dạng:
+
+```
+https://ten-du-an.vercel.app
+```
+
+#### Bước 7A.6 — Xử lý lỗi 404 khi refresh trang
+
+Vì dự án dùng **React Router** (client-side routing), cần thêm file `vercel.json` ở thư mục gốc:
+
+```json
+{
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
+```
+
+> 💡 Không có file này, khi người dùng refresh trang ở `/products` hoặc `/sales` sẽ bị lỗi 404.
+
+---
+
+### Lựa chọn B — Deploy lên Netlify
+
+#### Bước 7B.1 — Chuẩn bị
+
+1. Tạo tài khoản tại [netlify.com](https://www.netlify.com/) (miễn phí)
+2. Đẩy mã nguồn lên GitHub, GitLab hoặc Bitbucket
+
+#### Bước 7B.2 — Import dự án
+
+1. Đăng nhập Netlify → bấm **"Add new site"** → **"Import an existing project"**
+2. Chọn Git provider và repository
+
+#### Bước 7B.3 — Cấu hình Build
+
+| Cài đặt | Giá trị |
+|---|---|
+| **Build Command** | `npm run build` |
+| **Publish Directory** | `dist` |
+
+#### Bước 7B.4 — Cấu hình Environment Variables
+
+Vào **Site configuration** → **Environment variables** → **Add a variable**:
+
+| Key | Value |
+|---|---|
+| `VITE_SUPABASE_URL` | *(URL Supabase của bạn)* |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | *(Anon key của bạn)* |
+
+#### Bước 7B.5 — Xử lý lỗi 404 khi refresh trang
+
+Tạo file `public/_redirects` trong dự án với nội dung:
+
+```
+/*    /index.html   200
+```
+
+> 💡 File này nằm trong `public/` để Vite tự copy vào `dist/` khi build.
+
+#### Bước 7B.6 — Deploy
+
+Bấm **"Deploy site"**. Sau khi hoàn tất, Netlify cung cấp URL dạng:
+
+```
+https://ten-du-an.netlify.app
+```
+
+---
+
+### 📝 So sánh nhanh Vercel vs Netlify
+
+| Tiêu chí | Vercel | Netlify |
+|---|---|---|
+| **Tốc độ build** | Nhanh | Nhanh |
+| **Free tier** | 100 GB bandwidth/tháng | 100 GB bandwidth/tháng |
+| **Custom domain** | ✅ Miễn phí | ✅ Miễn phí |
+| **Auto deploy từ Git** | ✅ | ✅ |
+| **Preview deployments** | ✅ Mỗi PR | ✅ Mỗi PR |
+| **Redirect config** | `vercel.json` | `_redirects` file |
+
+> 💡 Cả hai đều phù hợp cho dự án này. Chọn nền tảng bạn quen thuộc hơn.
+
+---
+
+### ⚡ Deploy nhanh bằng CLI (Nâng cao)
+
+#### Vercel CLI
+
+```bash
+# Cài đặt
+npm install -g vercel
+
+# Deploy
+vercel
+
+# Deploy production
+vercel --prod
+```
+
+#### Netlify CLI
+
+```bash
+# Cài đặt
+npm install -g netlify-cli
+
+# Build trước
+npm run build
+
+# Deploy preview
+netlify deploy --dir=dist
+
+# Deploy production
+netlify deploy --dir=dist --prod
+```
+
+---
+
 > 📬 Nếu gặp vấn đề không có trong danh sách trên, hãy tạo Issue trên repository hoặc liên hệ người quản lý dự án.
