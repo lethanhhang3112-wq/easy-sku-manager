@@ -381,13 +381,12 @@ const CustomersPage = () => {
   // Export
   const handleExportExcel = useCallback(() => {
     const exportData = filtered.map((c) => ({
-      "Mã KH": c.code,
+      "Mã khách hàng": c.code,
       "Tên khách hàng": c.name,
       "Điện thoại": c.phone || "",
-      "Địa chỉ": c.address || "",
-      "Nhóm KH": c.customer_groups?.name || "",
+      "Nợ hiện tại": salesAggregates[c.id]?.debt || 0,
       "Tổng bán": salesAggregates[c.id]?.spend || 0,
-      "Công nợ": salesAggregates[c.id]?.debt || 0,
+      "Tổng bán trừ trả hàng": salesAggregates[c.id]?.spend || 0,
     }));
     const ws = XLSX.utils.json_to_sheet(exportData);
     const wb = XLSX.utils.book_new();
@@ -521,18 +520,18 @@ const CustomersPage = () => {
                     onCheckedChange={toggleSelectAll}
                   />
                 </TableHead>
-                <TableHead>Mã KH</TableHead>
+                <TableHead>Mã khách hàng</TableHead>
                 <TableHead className="cursor-pointer select-none" onClick={() => toggleSort("name")}>
                   Tên khách hàng <SortIcon field="name" />
                 </TableHead>
                 <TableHead>Điện thoại</TableHead>
-                <TableHead>Nhóm KH</TableHead>
                 <TableHead className="text-right cursor-pointer select-none" onClick={() => toggleSort("debt")}>
-                  Công nợ <SortIcon field="debt" />
+                  Nợ hiện tại <SortIcon field="debt" />
                 </TableHead>
                 <TableHead className="text-right cursor-pointer select-none" onClick={() => toggleSort("spend")}>
                   Tổng bán <SortIcon field="spend" />
                 </TableHead>
+                <TableHead className="text-right">Tổng bán trừ trả hàng</TableHead>
                 <TableHead className="w-[60px]" />
               </TableRow>
             </TableHeader>
@@ -545,6 +544,7 @@ const CustomersPage = () => {
                 filtered.map((c) => {
                   const spend = salesAggregates[c.id]?.spend || 0;
                   const debt = salesAggregates[c.id]?.debt || 0;
+                  const netSales = spend; // placeholder until returns tracking is implemented
                   return (
                     <TableRow
                       key={c.id}
@@ -560,11 +560,11 @@ const CustomersPage = () => {
                       <TableCell className="font-mono text-xs">{c.code}</TableCell>
                       <TableCell className="font-medium">{c.name}</TableCell>
                       <TableCell className="text-sm">{c.phone || "—"}</TableCell>
-                      <TableCell className="text-sm text-muted-foreground">{c.customer_groups?.name || "—"}</TableCell>
                       <TableCell className={cn("text-right", debt > 0 && "text-destructive font-medium")}>
                         {debt > 0 ? formatCurrency(debt) : "0"}
                       </TableCell>
                       <TableCell className="text-right">{formatCurrency(spend)}</TableCell>
+                      <TableCell className="text-right">{formatCurrency(netSales)}</TableCell>
                       <TableCell onClick={(e) => e.stopPropagation()}>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
