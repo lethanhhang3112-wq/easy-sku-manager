@@ -35,7 +35,7 @@ import { formatCurrency, CurrencyInput } from "@/components/CurrencyInput";
 import { AddProductModal } from "@/components/AddProductModal";
 import { StockLedgerSheet } from "@/components/StockLedgerSheet";
 import * as XLSX from "xlsx";
-import { BarcodePrintDialog } from "@/components/BarcodePrintDialog";
+import { BarcodePrintModal, type BarcodePrintProduct } from "@/components/shared/BarcodePrintModal";
 
 type Product = {
   id: string;
