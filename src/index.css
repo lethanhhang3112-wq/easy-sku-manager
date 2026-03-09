@@ -63,12 +63,16 @@
 
 /* ─── Barcode Print Styles ─── */
 @media print {
+  @page {
+    margin: 0;
+  }
   html, body {
     height: auto !important;
     overflow: visible !important;
     margin: 0 !important;
     padding: 0 !important;
   }
+  /* Hide everything except the print area */
   body * {
     visibility: hidden !important;
   }
@@ -76,16 +80,35 @@
   #barcode-print-area * {
     visibility: visible !important;
   }
+  /* Kill dialog overlays, backdrops, and fixed containers */
+  [data-radix-dialog-overlay],
+  [data-radix-dialog-content],
+  [role="dialog"] {
+    position: static !important;
+    transform: none !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+  }
+  /* Print area: absolute, full-width grid */
   #barcode-print-area {
     position: absolute !important;
     left: 0;
     top: 0;
     width: 100%;
     height: auto !important;
+    max-width: none !important;
     overflow: visible !important;
+    background: white !important;
   }
   #barcode-print-area > div {
     break-inside: avoid !important;
     page-break-inside: avoid !important;
+    page-break-after: auto !important;
+    overflow: visible !important;
   }
 }
