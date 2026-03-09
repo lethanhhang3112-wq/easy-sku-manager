@@ -7,7 +7,6 @@ import { startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth,
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Calendar } from "@/components/ui/calendar";
@@ -16,9 +15,6 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
-  Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription,
-} from "@/components/ui/sheet";
-import {
   Popover, PopoverContent, PopoverTrigger,
 } from "@/components/ui/popover";
 import {
@@ -26,21 +22,18 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
-} from "@/components/ui/dialog";
-import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import {
   Plus, Search, Filter, ChevronUp, ChevronDown, CalendarIcon,
-  Printer, Copy, FileDown, Ban, Save, PanelLeftClose, PanelLeft,
-  MoreHorizontal, CheckSquare, Star,
+  Printer, Copy, FileDown, Ban, PanelLeftClose, PanelLeft,
+  CheckSquare, Star,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useDebounce } from "@/hooks/use-debounce";
 import { formatCurrency } from "@/components/CurrencyInput";
+import { SalesOrderDetailRow } from "@/components/sales/SalesOrderDetailRow";
 
 // ─── Types ───────────────────────────────────────────────────────
 type SalesOrder = {
