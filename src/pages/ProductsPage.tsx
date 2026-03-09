@@ -409,7 +409,10 @@ const ProductsPage = () => {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setBarcodeOpen(true)}
+                onClick={() => {
+                  setBarcodeProducts(products.filter((p) => selectedIds.has(p.id)));
+                  setBarcodeOpen(true);
+                }}
               >
                 <Barcode className="mr-1.5 h-3.5 w-3.5" /> In tem mã
               </Button>
