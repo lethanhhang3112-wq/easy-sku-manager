@@ -45,6 +45,7 @@ export const ProductSearchDropdown = forwardRef<ProductSearchDropdownRef, Produc
 }, ref) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [isOpen, setIsOpen] = useState(false);
+  const [scannerOpen, setScannerOpen] = useState(false);
   const debouncedTerm = useDebounce(searchTerm, 300);
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
