@@ -802,7 +802,7 @@ const SuppliersPage = () => {
                                 </Badge>
                               </TableCell>
                               <TableCell className="text-xs">{format(new Date(item.date), "dd/MM/yyyy HH:mm")}</TableCell>
-                              <TableCell className={cn("text-right font-medium", item.amount > 0 ? "text-destructive" : "text-green-600")}>
+                              <TableCell className={cn("text-right font-medium", item.amount > 0 ? "text-destructive" : "text-primary")}>
                                 {item.amount > 0 ? "+" : ""}{formatCurrency(Math.abs(item.amount))}
                               </TableCell>
                             </TableRow>
