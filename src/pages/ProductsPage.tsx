@@ -596,6 +596,15 @@ const ProductsPage = () => {
                   Hủy
                 </Button>
                 <Button
+                  variant="outline"
+                  onClick={() => {
+                    setBarcodeProducts([editProduct]);
+                    setBarcodeOpen(true);
+                  }}
+                >
+                  <Barcode className="mr-1.5 h-4 w-4" /> In tem mã
+                </Button>
+                <Button
                   className="flex-1"
                   onClick={() => updateProductMutation.mutate()}
                   disabled={!editName.trim() || updateProductMutation.isPending}
