@@ -41,6 +41,8 @@ import {
 import { cn } from "@/lib/utils";
 import { useDebounce } from "@/hooks/use-debounce";
 import { formatCurrency } from "@/components/CurrencyInput";
+import { BarcodePrintModal } from "@/components/shared/BarcodePrintModal";
+
 
 // ─── Types ───────────────────────────────────────────────────────
 type ImportOrder = {
@@ -62,7 +64,7 @@ type DetailItem = {
   product_id: string;
   quantity: number;
   unit_cost: number;
-  products: { code: string; name: string } | null;
+  products: { code: string; name: string; sale_price: number } | null;
 };
 
 type PaymentSlip = {
@@ -140,6 +142,9 @@ const ImportsPage = () => {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [starredIds, setStarredIds] = useState<Set<string>>(new Set());
 
+  // Barcode print
+  const [isBarcodeModalOpen, setIsBarcodeModalOpen] = useState(false);
+
   // ─── Queries ─────────────────────────────────────────────────
   const { data: importOrders = [], isLoading } = useQuery({
     queryKey: ["import_orders"],
@@ -169,7 +174,7 @@ const ImportsPage = () => {
       if (!selectedOrder) return [];
       const { data, error } = await supabase
         .from("import_order_items")
-        .select("*, products:product_id(code, name)")
+        .select("*, products:product_id(code, name, sale_price)")
         .eq("import_order_id", selectedOrder.id);
       if (error) throw error;
       return data as DetailItem[];
@@ -848,6 +853,11 @@ const ImportsPage = () => {
                   <Button variant="outline" size="sm" onClick={handleCopy}>
                     <Copy className="mr-1.5 h-3.5 w-3.5" /> Sao chép
                   </Button>
+                  {!isCancelled && detailItems.length > 0 && (
+                    <Button variant="outline" size="sm" onClick={() => setIsBarcodeModalOpen(true)}>
+                      <Barcode className="mr-1.5 h-3.5 w-3.5" /> In tem mã
+                    </Button>
+                  )}
                   {!isCancelled && (
                     <Button
                       variant="destructive"
@@ -864,6 +874,21 @@ const ImportsPage = () => {
           )}
         </SheetContent>
       </Sheet>
+
+      {/* ═══ BARCODE PRINT MODAL ══════════════════════════════ */}
+      <BarcodePrintModal
+        isOpen={isBarcodeModalOpen}
+        onClose={() => setIsBarcodeModalOpen(false)}
+        initialProducts={detailItems
+          .filter((item) => item.products)
+          .map((item) => ({
+            id: item.product_id,
+            code: item.products!.code,
+            name: item.products!.name,
+            sale_price: item.products!.sale_price,
+            defaultPrintQuantity: item.quantity,
+          }))}
+      />
 
       {/* ═══ VOID CONFIRMATION ═════════════════════════════════ */}
       <AlertDialog open={!!voidTarget} onOpenChange={(open) => !open && setVoidTarget(null)}>
