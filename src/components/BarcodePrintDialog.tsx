@@ -55,21 +55,18 @@ export const BarcodePrintDialog = ({
   const [layout, setLayout] = useState("3");
   const printRef = useRef<HTMLDivElement>(null);
 
-  // Initialize items when dialog opens
-  const initItems = () => {
-    setItems(
-      products.map((p) => ({
-        ...p,
-        print_qty: 1,
-      }))
-    );
-    setStep("quantity");
-  };
-
-  const handleOpenChange = (v: boolean) => {
-    if (v) initItems();
-    onOpenChange(v);
-  };
+  // Initialize items when dialog opens with products
+  useEffect(() => {
+    if (open && products.length > 0) {
+      setItems(
+        products.map((p) => ({
+          ...p,
+          print_qty: 1,
+        }))
+      );
+      setStep("quantity");
+    }
+  }, [open, products]);
 
   const updateQty = (id: string, qty: number) => {
     setItems((prev) =>
