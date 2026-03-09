@@ -260,34 +260,35 @@ export const BarcodePrintDialog = ({
                 id="barcode-print-area"
                 className={cn(
                   "grid gap-2 mx-auto bg-background p-2",
-                  selectedLayout.cols === 3 && "grid-cols-3 max-w-[680px]",
-                  selectedLayout.cols === 2 && "grid-cols-2 max-w-[460px]",
-                  selectedLayout.cols === 1 && "grid-cols-1 max-w-[240px]"
+                  selectedLayout.cols === 3 && "grid-cols-3",
+                  selectedLayout.cols === 2 && "grid-cols-2",
+                  selectedLayout.cols === 1 && "grid-cols-1",
+                  selectedLayout.maxW
                 )}
               >
                 {replicatedItems.map((item, idx) => (
                   <div
                     key={`${item.id}-${idx}`}
-                    className="border border-dashed border-border/60 p-2 flex flex-col items-center text-center"
+                    className={cn("border border-dashed border-border/60 flex flex-col items-center text-center", selectedLayout.padding)}
                   >
                     {showStoreName && storeName && (
-                      <div className="text-[9px] font-medium text-muted-foreground mb-0.5 truncate w-full">
+                      <div className={cn("font-medium text-muted-foreground mb-0.5 truncate w-full", selectedLayout.storeFontSize)}>
                         {storeName}
                       </div>
                     )}
-                    <div className="text-[10px] font-medium truncate w-full leading-tight mb-1">
+                    <div className={cn("font-medium truncate w-full leading-tight mb-1", selectedLayout.nameFontSize)}>
                       {item.name}
                     </div>
                     <Barcode
                       value={item.code}
-                      width={1.2}
-                      height={32}
-                      fontSize={10}
+                      width={selectedLayout.barWidth}
+                      height={selectedLayout.barHeight}
+                      fontSize={selectedLayout.codeFontSize}
                       margin={0}
                       displayValue={true}
                     />
                     {showPrice && (
-                      <div className="text-xs font-bold mt-1">
+                      <div className={cn("font-bold mt-1", selectedLayout.priceFontSize)}>
                         {formatCurrency(item.sale_price)}
                       </div>
                     )}
