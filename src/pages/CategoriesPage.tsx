@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -12,12 +12,12 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
 import {
-  Sheet, SheetContent, SheetHeader, SheetTitle,
-} from "@/components/ui/sheet";
-import { Skeleton } from "@/components/ui/skeleton";
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2 } from "lucide-react";
-import { formatCurrency } from "@/components/CurrencyInput";
+import { Plus, Pencil, Trash2, Search } from "lucide-react";
+import { useDebounce } from "@/hooks/use-debounce";
 
 type Category = {
   id: string;
@@ -26,14 +26,19 @@ type Category = {
   created_at: string;
 };
 
+type ProductCount = { category_id: string; count: number };
+
 const CategoriesPage = () => {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Category | null>(null);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+  const [search, setSearch] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<Category | null>(null);
+  const debouncedSearch = useDebounce(search, 300);
 
+  // Fetch categories
   const { data: categories = [], isLoading } = useQuery({
     queryKey: ["categories"],
     queryFn: async () => {
@@ -46,20 +51,38 @@ const CategoriesPage = () => {
     },
   });
 
-  const { data: categoryProducts = [], isLoading: productsLoading } = useQuery({
-    queryKey: ["category-products", selectedCategory?.id],
+  // Fetch product counts per category
+  const { data: productCounts = [] } = useQuery({
+    queryKey: ["category-product-counts"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("products")
-        .select("id, code, name, sale_price, stock_quantity")
-        .eq("category_id", selectedCategory!.id)
-        .order("name");
+        .select("category_id");
       if (error) throw error;
-      return data;
+      const counts: Record<string, number> = {};
+      (data || []).forEach((p) => {
+        if (p.category_id) {
+          counts[p.category_id] = (counts[p.category_id] || 0) + 1;
+        }
+      });
+      return Object.entries(counts).map(([category_id, count]) => ({ category_id, count })) as ProductCount[];
     },
-    enabled: !!selectedCategory,
   });
 
+  const countMap = useMemo(() => {
+    const map: Record<string, number> = {};
+    productCounts.forEach((pc) => { map[pc.category_id] = pc.count; });
+    return map;
+  }, [productCounts]);
+
+  // Filter
+  const filtered = useMemo(() => {
+    if (!debouncedSearch.trim()) return categories;
+    const q = debouncedSearch.toLowerCase();
+    return categories.filter((c) => c.name.toLowerCase().includes(q));
+  }, [categories, debouncedSearch]);
+
+  // Save mutation
   const saveMutation = useMutation({
     mutationFn: async () => {
       if (editing) {
@@ -77,22 +100,37 @@ const CategoriesPage = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["categories"] });
-      toast.success(editing ? "Đã cập nhật nhóm sản phẩm" : "Đã thêm nhóm sản phẩm");
+      toast.success(editing ? "Đã cập nhật nhóm hàng" : "Đã thêm nhóm hàng");
       closeDialog();
     },
     onError: (e: any) => toast.error(e.message),
   });
 
+  // Delete mutation with product check
   const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("categories").delete().eq("id", id);
+    mutationFn: async (cat: Category) => {
+      // Check if category has products
+      const { count, error: countErr } = await supabase
+        .from("products")
+        .select("id", { count: "exact", head: true })
+        .eq("category_id", cat.id);
+      if (countErr) throw countErr;
+      if (count && count > 0) {
+        throw new Error(`Nhóm hàng "${cat.name}" đang có ${count} sản phẩm. Vui lòng chuyển sản phẩm sang nhóm khác trước khi xóa.`);
+      }
+      const { error } = await supabase.from("categories").delete().eq("id", cat.id);
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["categories"] });
-      toast.success("Đã xóa nhóm sản phẩm");
+      queryClient.invalidateQueries({ queryKey: ["category-product-counts"] });
+      toast.success("Đã xóa nhóm hàng");
+      setDeleteTarget(null);
     },
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: any) => {
+      toast.error(e.message);
+      setDeleteTarget(null);
+    },
   });
 
   const openAdd = () => {
@@ -117,41 +155,50 @@ const CategoriesPage = () => {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Nhóm sản phẩm</h1>
+        <h1 className="text-2xl font-bold">Nhóm hàng hóa</h1>
         <Button onClick={openAdd}>
           <Plus className="mr-2 h-4 w-4" /> Thêm nhóm
         </Button>
       </div>
 
+      {/* Search */}
+      <div className="relative mb-4 max-w-sm">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Tìm theo tên nhóm hàng..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="pl-9"
+        />
+      </div>
+
       <div className="bg-card rounded-lg border">
         <Table>
           <TableHeader>
-            <TableRow>
+            <TableRow className="bg-muted/50">
               <TableHead>Tên nhóm</TableHead>
-              <TableHead>Mô tả</TableHead>
+              <TableHead>Ghi chú</TableHead>
+              <TableHead className="text-right">Số lượng mặt hàng</TableHead>
               <TableHead className="w-[100px]">Thao tác</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableRow><TableCell colSpan={3} className="text-center text-muted-foreground">Đang tải...</TableCell></TableRow>
-            ) : categories.length === 0 ? (
-              <TableRow><TableCell colSpan={3} className="text-center text-muted-foreground">Chưa có nhóm sản phẩm nào</TableCell></TableRow>
+              <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground">Đang tải...</TableCell></TableRow>
+            ) : filtered.length === 0 ? (
+              <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground">{search ? "Không tìm thấy nhóm hàng" : "Chưa có nhóm hàng nào"}</TableCell></TableRow>
             ) : (
-              categories.map((cat) => (
-                <TableRow
-                  key={cat.id}
-                  className="cursor-pointer"
-                  onClick={() => setSelectedCategory(cat)}
-                >
+              filtered.map((cat) => (
+                <TableRow key={cat.id}>
                   <TableCell className="font-medium">{cat.name}</TableCell>
-                  <TableCell className="text-muted-foreground">{cat.description || "—"}</TableCell>
+                  <TableCell className="text-muted-foreground max-w-[300px] truncate">{cat.description || "—"}</TableCell>
+                  <TableCell className="text-right font-medium">{countMap[cat.id] || 0}</TableCell>
                   <TableCell>
-                    <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex gap-1">
                       <Button variant="ghost" size="icon" onClick={() => openEdit(cat)}>
                         <Pencil className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => deleteMutation.mutate(cat.id)}>
+                      <Button variant="ghost" size="icon" onClick={() => setDeleteTarget(cat)}>
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
                     </div>
@@ -167,7 +214,7 @@ const CategoriesPage = () => {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editing ? "Sửa nhóm sản phẩm" : "Thêm nhóm sản phẩm"}</DialogTitle>
+            <DialogTitle>{editing ? "Sửa nhóm hàng" : "Thêm nhóm hàng"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
@@ -175,8 +222,8 @@ const CategoriesPage = () => {
               <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nhập tên nhóm" />
             </div>
             <div>
-              <Label>Mô tả</Label>
-              <Textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Nhập mô tả" />
+              <Label>Ghi chú</Label>
+              <Textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Nhập ghi chú" />
             </div>
           </div>
           <DialogFooter>
@@ -188,44 +235,26 @@ const CategoriesPage = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Category Products Sheet */}
-      <Sheet open={!!selectedCategory} onOpenChange={(o) => { if (!o) setSelectedCategory(null); }}>
-        <SheetContent className="sm:max-w-lg">
-          <SheetHeader>
-            <SheetTitle>Sản phẩm trong nhóm: {selectedCategory?.name}</SheetTitle>
-          </SheetHeader>
-          <div className="mt-4">
-            {productsLoading ? (
-              <div className="space-y-3">
-                {[1, 2, 3].map((i) => <Skeleton key={i} className="h-10 w-full" />)}
-              </div>
-            ) : categoryProducts.length === 0 ? (
-              <p className="text-center text-muted-foreground py-8">Chưa có sản phẩm nào trong nhóm này.</p>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Mã hàng</TableHead>
-                    <TableHead>Tên hàng</TableHead>
-                    <TableHead className="text-right">Giá bán</TableHead>
-                    <TableHead className="text-right">Tồn kho</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {categoryProducts.map((p) => (
-                    <TableRow key={p.id}>
-                      <TableCell className="font-mono text-xs">{p.code}</TableCell>
-                      <TableCell>{p.name}</TableCell>
-                      <TableCell className="text-right">{formatCurrency(p.sale_price)}</TableCell>
-                      <TableCell className="text-right">{p.stock_quantity}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-          </div>
-        </SheetContent>
-      </Sheet>
+      {/* Delete Confirmation */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(o) => { if (!o) setDeleteTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xác nhận xóa</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bạn có chắc muốn xóa nhóm hàng "{deleteTarget?.name}"? Hành động này không thể hoàn tác.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Hủy</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteTarget && deleteMutation.mutate(deleteTarget)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteMutation.isPending ? "Đang xóa..." : "Xóa"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
