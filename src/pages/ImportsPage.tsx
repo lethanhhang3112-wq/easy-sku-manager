@@ -171,7 +171,7 @@ const ImportsPage = () => {
       if (!selectedOrder) return [];
       const { data, error } = await supabase
         .from("import_order_items")
-        .select("*, products:product_id(code, name)")
+        .select("*, products:product_id(code, name, sale_price)")
         .eq("import_order_id", selectedOrder.id);
       if (error) throw error;
       return data as DetailItem[];
