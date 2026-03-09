@@ -192,6 +192,7 @@ export type Database = {
           id: string
           name: string
           sale_price: number
+          status: string
           stock_quantity: number
         }
         Insert: {
@@ -202,6 +203,7 @@ export type Database = {
           id?: string
           name: string
           sale_price?: number
+          status?: string
           stock_quantity?: number
         }
         Update: {
@@ -212,6 +214,7 @@ export type Database = {
           id?: string
           name?: string
           sale_price?: number
+          status?: string
           stock_quantity?: number
         }
         Relationships: [
@@ -381,6 +384,7 @@ export type Database = {
           id: string
           name: string
           sale_price: number
+          status: string
           stock_quantity: number
         }[]
         SetofOptions: {
