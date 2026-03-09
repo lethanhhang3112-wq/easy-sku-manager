@@ -609,8 +609,8 @@ const ImportsPage = () => {
                       <TableCell className="text-muted-foreground text-sm whitespace-nowrap">
                         {format(new Date(o.created_at), "dd/MM/yyyy HH:mm")}
                       </TableCell>
-                      <TableCell className="text-muted-foreground text-sm">{o.suppliers?.code || "—"}</TableCell>
-                      <TableCell>{o.suppliers?.name || "—"}</TableCell>
+                      <TableCell className="text-muted-foreground text-sm">{o.suppliers?.code || "-"}</TableCell>
+                      <TableCell>{o.suppliers?.name || "Khách lẻ"}</TableCell>
                       <TableCell className="text-right font-medium">{totalQty}</TableCell>
                       <TableCell className="text-right text-muted-foreground">{totalItems}</TableCell>
                       <TableCell className="text-right font-medium">{fmt(o.total_amount)}</TableCell>
