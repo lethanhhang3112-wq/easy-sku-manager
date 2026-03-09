@@ -136,6 +136,10 @@ const ImportsPage = () => {
   const [editDate, setEditDate] = useState("");
   const [editSupplierId, setEditSupplierId] = useState<string | null>(null);
 
+  // Bulk select & star
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [starredIds, setStarredIds] = useState<Set<string>>(new Set());
+
   // ─── Queries ─────────────────────────────────────────────────
   const { data: importOrders = [], isLoading } = useQuery({
     queryKey: ["import_orders"],
