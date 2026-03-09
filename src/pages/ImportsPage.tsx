@@ -359,7 +359,7 @@ const ImportsPage = () => {
   const handleExportCSV = (data: ImportOrder[]) => {
     const headers = ["Mã phiếu,Nhà cung cấp,Tổng tiền,Trạng thái,Ngày tạo"];
     const rows = data.map((o) =>
-      `${o.code},${o.suppliers?.name || ""},${o.total_amount},${STATUS_MAP[o.status]?.label || o.status},${format(new Date(o.created_at), "dd/MM/yyyy HH:mm")}`
+      `${o.code},${o.suppliers?.name || "Khách lẻ"},${o.total_amount},${STATUS_MAP[o.status]?.label || o.status},${format(new Date(o.created_at), "dd/MM/yyyy HH:mm")}`
     );
     const csv = [headers, ...rows].join("\n");
     const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
@@ -609,8 +609,8 @@ const ImportsPage = () => {
                       <TableCell className="text-muted-foreground text-sm whitespace-nowrap">
                         {format(new Date(o.created_at), "dd/MM/yyyy HH:mm")}
                       </TableCell>
-                      <TableCell className="text-muted-foreground text-sm">{o.suppliers?.code || "—"}</TableCell>
-                      <TableCell>{o.suppliers?.name || "—"}</TableCell>
+                      <TableCell className="text-muted-foreground text-sm">{o.suppliers?.code || "-"}</TableCell>
+                      <TableCell>{o.suppliers?.name || "Khách lẻ"}</TableCell>
                       <TableCell className="text-right font-medium">{totalQty}</TableCell>
                       <TableCell className="text-right text-muted-foreground">{totalItems}</TableCell>
                       <TableCell className="text-right font-medium">{fmt(o.total_amount)}</TableCell>
@@ -695,7 +695,7 @@ const ImportsPage = () => {
                           </SelectContent>
                         </Select>
                       ) : (
-                        <p className="text-sm">{selectedOrder.suppliers?.name || "—"}</p>
+                        <p className="text-sm">{selectedOrder.suppliers?.name || "Khách lẻ"}</p>
                       )}
                     </div>
                   </div>

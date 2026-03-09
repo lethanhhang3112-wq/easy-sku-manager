@@ -351,7 +351,7 @@ const CreateImportPage = () => {
                 <Popover open={supplierOpen} onOpenChange={setSupplierOpen}>
                   <PopoverTrigger asChild>
                     <Button variant="outline" role="combobox" className="flex-1 justify-between h-8 text-xs font-normal px-2.5">
-                      {selectedSupplier ? selectedSupplier.name : "Tìm nhà cung cấp (F4)"}
+                      {selectedSupplier ? selectedSupplier.name : "Chọn nhà cung cấp (Mặc định: Khách lẻ)"}
                       <ChevronsUpDown className="ml-1 h-3 w-3 shrink-0 opacity-50" />
                     </Button>
                   </PopoverTrigger>
