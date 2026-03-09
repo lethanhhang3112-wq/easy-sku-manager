@@ -135,7 +135,7 @@ const DEFAULT_TEMPLATE = `<div style="font-family: 'Courier New', monospace; fon
 function parseTemplate(content: string, data: Record<string, string>): string {
   let result = content;
   for (const [key, value] of Object.entries(data)) {
-    result = result.replaceAll(key, value);
+    result = result.split(key).join(value);
   }
   return result;
 }
