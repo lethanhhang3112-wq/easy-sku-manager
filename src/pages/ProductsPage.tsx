@@ -406,6 +406,13 @@ const ProductsPage = () => {
                 <ToggleLeft className="mr-1.5 h-3.5 w-3.5" /> Ngừng KD
               </Button>
               <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setBarcodeOpen(true)}
+              >
+                <Barcode className="mr-1.5 h-3.5 w-3.5" /> In tem mã
+              </Button>
+              <Button
                 variant="destructive"
                 size="sm"
                 onClick={() => setBulkDeleteOpen(true)}
