@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,7 +7,6 @@ import { startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth,
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Calendar } from "@/components/ui/calendar";
@@ -16,9 +15,6 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
-  Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription,
-} from "@/components/ui/sheet";
-import {
   Popover, PopoverContent, PopoverTrigger,
 } from "@/components/ui/popover";
 import {
@@ -26,21 +22,18 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
-} from "@/components/ui/dialog";
-import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import {
   Plus, Search, Filter, ChevronUp, ChevronDown, CalendarIcon,
-  Printer, Copy, FileDown, Ban, Save, PanelLeftClose, PanelLeft,
-  MoreHorizontal, CheckSquare, Star,
+  Printer, FileDown, Ban, PanelLeftClose, PanelLeft,
+  CheckSquare, Star,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useDebounce } from "@/hooks/use-debounce";
 import { formatCurrency } from "@/components/CurrencyInput";
+import { SalesOrderDetailRow } from "@/components/sales/SalesOrderDetailRow";
 
 // ─── Types ───────────────────────────────────────────────────────
 type SalesOrder = {
@@ -52,14 +45,6 @@ type SalesOrder = {
   created_at: string;
   status: string;
   customers: { name: string; code: string } | null;
-};
-
-type DetailItem = {
-  id: string;
-  product_id: string;
-  quantity: number;
-  unit_price: number;
-  products: { code: string; name: string } | null;
 };
 
 type SortField = "created_at" | "code" | "total_amount";
@@ -81,6 +66,8 @@ const TIME_FILTERS = [
   { value: "this_year", label: "Năm nay" },
   { value: "custom", label: "Tùy chỉnh" },
 ];
+
+const TABLE_COL_COUNT = 11;
 
 function getTimeDates(value: string): { start?: Date; end?: Date } {
   const now = new Date();
@@ -115,21 +102,13 @@ const SalesPage = () => {
   // Bulk select
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
-  // Detail state
-  const [selectedOrder, setSelectedOrder] = useState<SalesOrder | null>(null);
-  const [detailOpen, setDetailOpen] = useState(false);
+  // Inline expansion
+  const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
 
   // Void confirm
   const [voidTarget, setVoidTarget] = useState<SalesOrder | null>(null);
   const [bulkVoidOpen, setBulkVoidOpen] = useState(false);
 
-  // Bulk update dialog
-  const [bulkUpdateOpen, setBulkUpdateOpen] = useState(false);
-  const [bulkNotes, setBulkNotes] = useState("");
-
-  // Inline edit
-  const [editNotes, setEditNotes] = useState("");
-  
   // Star/favorite (local state)
   const [starredIds, setStarredIds] = useState<Set<string>>(new Set());
 
@@ -146,31 +125,14 @@ const SalesPage = () => {
     },
   });
 
-  // Detail items query
-  const { data: detailItems = [], isLoading: itemsLoading } = useQuery({
-    queryKey: ["sales_detail_items", selectedOrder?.id],
-    queryFn: async () => {
-      if (!selectedOrder) return [];
-      const { data, error } = await supabase
-        .from("sales_order_items")
-        .select("*, products:product_id(code, name)")
-        .eq("sales_order_id", selectedOrder.id);
-      if (error) throw error;
-      return data as DetailItem[];
-    },
-    enabled: !!selectedOrder,
-  });
-
   // ─── Filter & Sort ──────────────────────────────────────────
   const filteredOrders = useMemo(() => {
     let result = salesOrders;
 
-    // Status filter
     if (statusFilters.length < Object.keys(STATUS_MAP).length) {
       result = result.filter((o) => statusFilters.includes(o.status || "completed"));
     }
 
-    // Search
     if (debouncedSearch) {
       const q = debouncedSearch.toLowerCase();
       result = result.filter((o) =>
@@ -179,7 +141,6 @@ const SalesPage = () => {
       );
     }
 
-    // Time filter
     let start: Date | undefined;
     let end: Date | undefined;
     if (timeFilter === "custom") {
@@ -193,7 +154,6 @@ const SalesPage = () => {
     if (start) result = result.filter((o) => new Date(o.created_at) >= start!);
     if (end) result = result.filter((o) => new Date(o.created_at) <= end!);
 
-    // Sort
     result = [...result].sort((a, b) => {
       let cmp = 0;
       if (sortField === "created_at") cmp = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
@@ -215,7 +175,6 @@ const SalesPage = () => {
         .eq("sales_order_id", order.id);
       if (itemsErr) throw itemsErr;
 
-      // Restore inventory
       if (items && items.length > 0) {
         await Promise.all(items.map(async (item) => {
           const { data: product } = await supabase
@@ -244,8 +203,7 @@ const SalesPage = () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
       toast.success("Đã hủy hóa đơn và hoàn tồn kho thành công");
       setVoidTarget(null);
-      setDetailOpen(false);
-      setSelectedOrder(null);
+      setExpandedOrderId(null);
     },
     onError: (e: any) => toast.error(e.message),
   });
@@ -287,39 +245,9 @@ const SalesPage = () => {
     onError: (e: any) => toast.error(e.message),
   });
 
-  // ─── Bulk update mutation ──────────────────────────────────
-  const bulkUpdateMutation = useMutation({
-    mutationFn: async () => {
-      const ids = Array.from(selectedIds);
-      await Promise.all(ids.map((id) =>
-        supabase.from("sales_orders").update({ status: "completed" }).eq("id", id)
-      ));
-      // We're updating notes conceptually — but sales_orders doesn't have notes column
-      // For now this just serves as the bulk update UI placeholder
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["sales_orders"] });
-      toast.success("Đã cập nhật thông tin");
-      setBulkUpdateOpen(false);
-      setSelectedIds(new Set());
-    },
-    onError: (e: any) => toast.error(e.message),
-  });
-
-  // ─── Save detail (inline edit — notes not available on sales_orders, but we keep UI) ──
-  const saveMutation = useMutation({
-    mutationFn: async () => {
-      // sales_orders doesn't have a notes column — this is a no-op placeholder
-      // In future, add notes column to sales_orders
-      toast.info("Chức năng cập nhật ghi chú sẽ sớm được hỗ trợ");
-    },
-  });
-
   // ─── Handlers ──────────────────────────────────────────────
-  const openDetail = (order: SalesOrder) => {
-    setSelectedOrder(order);
-    setEditNotes("");
-    setDetailOpen(true);
+  const toggleExpand = (orderId: string) => {
+    setExpandedOrderId((prev) => (prev === orderId ? null : orderId));
   };
 
   const toggleSort = (field: SortField) => {
@@ -354,9 +282,9 @@ const SalesPage = () => {
     }
   };
 
-  const handleCopy = () => {
-    if (!selectedOrder || !detailItems.length) return;
-    const cartItems = detailItems.map((item) => ({
+  const handleCopy = (order: SalesOrder, items: any[]) => {
+    if (!items.length) return;
+    const cartItems = items.map((item: any) => ({
       product_id: item.product_id,
       product_code: item.products?.code || "",
       product_name: item.products?.name || "",
@@ -367,7 +295,7 @@ const SalesPage = () => {
     navigate("/sales/new", {
       state: {
         prefillCart: cartItems,
-        prefillCustomerId: selectedOrder.customer_id,
+        prefillCustomerId: order.customer_id,
       },
     });
   };
@@ -390,10 +318,10 @@ const SalesPage = () => {
     toast.success("Đã xuất file CSV");
   };
 
-  const handleExportDetail = () => {
-    if (!selectedOrder || !detailItems.length) return;
+  const handleExportDetail = (order: SalesOrder, items: any[]) => {
+    if (!items.length) return;
     const headers = ["Mã SP,Tên SP,Số lượng,Đơn giá,Thành tiền"];
-    const rows = detailItems.map((item) =>
+    const rows = items.map((item: any) =>
       `${item.products?.code || ""},${item.products?.name || ""},${item.quantity},${item.unit_price},${item.quantity * item.unit_price}`
     );
     const csv = [headers, ...rows].join("\n");
@@ -401,13 +329,11 @@ const SalesPage = () => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `hoa-don-${selectedOrder.code}.csv`;
+    a.download = `hoa-don-${order.code}.csv`;
     a.click();
     URL.revokeObjectURL(url);
     toast.success("Đã xuất file CSV");
   };
-
-  const isCancelled = selectedOrder?.status === "cancelled";
 
   // ─── Render ────────────────────────────────────────────────
   return (
@@ -517,7 +443,6 @@ const SalesPage = () => {
             <Badge variant="secondary" className="text-xs">{filteredOrders.length}</Badge>
           </div>
           <div className="flex items-center gap-2">
-            {/* Bulk Actions */}
             {selectedIds.size > 0 && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -600,53 +525,70 @@ const SalesPage = () => {
               {isLoading ? (
                 Array.from({ length: 5 }).map((_, i) => (
                   <TableRow key={i}>
-                    {Array.from({ length: 11 }).map((_, j) => (
+                    {Array.from({ length: TABLE_COL_COUNT }).map((_, j) => (
                       <TableCell key={j}><Skeleton className="h-4 w-full" /></TableCell>
                     ))}
                   </TableRow>
                 ))
               ) : filteredOrders.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={11} className="text-center py-12 text-muted-foreground">
+                  <TableCell colSpan={TABLE_COL_COUNT} className="text-center py-12 text-muted-foreground">
                     {debouncedSearch ? "Không tìm thấy hóa đơn nào" : "Chưa có hóa đơn nào"}
                   </TableCell>
                 </TableRow>
               ) : (
                 filteredOrders.map((o) => {
                   const status = STATUS_MAP[o.status] || STATUS_MAP.completed;
-                  const discount = 0; // sales_orders doesn't have discount column yet
+                  const discount = 0;
                   const totalAfterDiscount = o.total_amount - discount;
-                  const customerPaid = o.total_amount; // sales_orders doesn't have amount_paid column yet
+                  const customerPaid = o.total_amount;
                   const isStarred = starredIds.has(o.id);
+                  const isExpanded = expandedOrderId === o.id;
                   return (
-                    <TableRow
-                      key={o.id}
-                      className="cursor-pointer hover:bg-accent/50"
-                      onClick={() => openDetail(o)}
-                    >
-                      <TableCell onClick={(e) => e.stopPropagation()}>
-                        <Checkbox
-                          checked={selectedIds.has(o.id)}
-                          onCheckedChange={() => toggleSelect(o.id)}
+                    <>{/* Fragment for row + expansion */}
+                      <TableRow
+                        key={o.id}
+                        className={cn(
+                          "cursor-pointer hover:bg-accent/50",
+                          isExpanded && "bg-primary/5 border-b-0"
+                        )}
+                        onClick={() => toggleExpand(o.id)}
+                      >
+                        <TableCell onClick={(e) => e.stopPropagation()}>
+                          <Checkbox
+                            checked={selectedIds.has(o.id)}
+                            onCheckedChange={() => toggleSelect(o.id)}
+                          />
+                        </TableCell>
+                        <TableCell onClick={(e) => { e.stopPropagation(); setStarredIds(prev => { const next = new Set(prev); if (next.has(o.id)) next.delete(o.id); else next.add(o.id); return next; }); }}>
+                          <Star className={cn("h-4 w-4 transition-colors", isStarred ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground/40 hover:text-yellow-400")} />
+                        </TableCell>
+                        <TableCell className="text-muted-foreground text-sm whitespace-nowrap">
+                          {format(new Date(o.created_at), "dd/MM/yyyy HH:mm")}
+                        </TableCell>
+                        <TableCell className="font-mono text-primary">{o.code}</TableCell>
+                        <TableCell className="text-muted-foreground text-sm">{o.customers?.code || "—"}</TableCell>
+                        <TableCell>{o.customers?.name || "Khách lẻ"}</TableCell>
+                        <TableCell className="text-right font-medium">{fmt(o.total_amount)}</TableCell>
+                        <TableCell className="text-right text-muted-foreground">{fmt(discount)}</TableCell>
+                        <TableCell className="text-right font-medium">{fmt(totalAfterDiscount)}</TableCell>
+                        <TableCell className="text-right font-medium text-primary">{fmt(customerPaid)}</TableCell>
+                        <TableCell>
+                          <Badge variant={status.variant}>{status.label}</Badge>
+                        </TableCell>
+                      </TableRow>
+                      {isExpanded && (
+                        <SalesOrderDetailRow
+                          key={`detail-${o.id}`}
+                          order={o}
+                          colSpan={TABLE_COL_COUNT}
+                          onVoid={setVoidTarget}
+                          onCopy={handleCopy}
+                          onExport={handleExportDetail}
+                          onPrint={handlePrint}
                         />
-                      </TableCell>
-                      <TableCell onClick={(e) => { e.stopPropagation(); setStarredIds(prev => { const next = new Set(prev); if (next.has(o.id)) next.delete(o.id); else next.add(o.id); return next; }); }}>
-                        <Star className={cn("h-4 w-4 transition-colors", isStarred ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground/40 hover:text-yellow-400")} />
-                      </TableCell>
-                      <TableCell className="text-muted-foreground text-sm whitespace-nowrap">
-                        {format(new Date(o.created_at), "dd/MM/yyyy HH:mm")}
-                      </TableCell>
-                      <TableCell className="font-mono text-primary">{o.code}</TableCell>
-                      <TableCell className="text-muted-foreground text-sm">{o.customers?.code || "—"}</TableCell>
-                      <TableCell>{o.customers?.name || "Khách lẻ"}</TableCell>
-                      <TableCell className="text-right font-medium">{fmt(o.total_amount)}</TableCell>
-                      <TableCell className="text-right text-muted-foreground">{fmt(discount)}</TableCell>
-                      <TableCell className="text-right font-medium">{fmt(totalAfterDiscount)}</TableCell>
-                      <TableCell className="text-right font-medium text-primary">{fmt(customerPaid)}</TableCell>
-                      <TableCell>
-                        <Badge variant={status.variant}>{status.label}</Badge>
-                      </TableCell>
-                    </TableRow>
+                      )}
+                    </>
                   );
                 })
               )}
@@ -654,148 +596,6 @@ const SalesPage = () => {
           </Table>
         </div>
       </div>
-
-      {/* ═══ DETAIL SHEET ══════════════════════════════════════ */}
-      <Sheet open={detailOpen} onOpenChange={(open) => { setDetailOpen(open); if (!open) setSelectedOrder(null); }}>
-        <SheetContent side="right" className="w-full sm:max-w-2xl flex flex-col p-0">
-          <SheetHeader className="p-5 pb-0">
-            <SheetTitle className="flex items-center gap-2">
-              Hóa đơn: {selectedOrder?.code}
-              {selectedOrder && (
-                <Badge variant={STATUS_MAP[selectedOrder.status]?.variant || "default"}>
-                  {STATUS_MAP[selectedOrder.status]?.label || selectedOrder.status}
-                </Badge>
-              )}
-            </SheetTitle>
-            <SheetDescription>Chi tiết hóa đơn bán hàng</SheetDescription>
-          </SheetHeader>
-
-          <Tabs defaultValue="info" className="flex-1 flex flex-col overflow-hidden">
-            <TabsList className="mx-5 w-fit">
-              <TabsTrigger value="info">Thông tin</TabsTrigger>
-              <TabsTrigger value="payments">Chi tiết thanh toán</TabsTrigger>
-            </TabsList>
-
-            {/* ─── Info Tab ─────────────────────────────────── */}
-            <TabsContent value="info" className="flex-1 overflow-y-auto px-5 pb-2 mt-0">
-              {selectedOrder && (
-                <div className="space-y-4 py-4">
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <span className="text-muted-foreground text-xs">Thời gian</span>
-                      <p className="font-medium">{format(new Date(selectedOrder.created_at), "dd/MM/yyyy HH:mm")}</p>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground text-xs">Khách hàng</span>
-                      <p className="font-medium">{selectedOrder.customers?.name || "Khách lẻ"}</p>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground text-xs">Phương thức thanh toán</span>
-                      <p className="font-medium">{selectedOrder.payment_method === "cash" ? "Tiền mặt" : "Chuyển khoản"}</p>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground text-xs">Tổng tiền</span>
-                      <p className="font-semibold text-primary text-lg">{fmt(selectedOrder.total_amount)}</p>
-                    </div>
-                  </div>
-
-                  {/* Items table */}
-                  <div>
-                    <Label className="text-xs text-muted-foreground mb-2 block">Danh sách hàng hóa</Label>
-                    <div className="border rounded-lg">
-                      <Table>
-                        <TableHeader>
-                          <TableRow className="bg-muted/40">
-                            <TableHead className="text-xs">Mã SP</TableHead>
-                            <TableHead className="text-xs">Tên SP</TableHead>
-                            <TableHead className="text-xs text-right">SL</TableHead>
-                            <TableHead className="text-xs text-right">Đơn giá</TableHead>
-                            <TableHead className="text-xs text-right">Thành tiền</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {itemsLoading ? (
-                            Array.from({ length: 2 }).map((_, i) => (
-                              <TableRow key={i}>
-                                {Array.from({ length: 5 }).map((_, j) => (
-                                  <TableCell key={j}><Skeleton className="h-3 w-full" /></TableCell>
-                                ))}
-                              </TableRow>
-                            ))
-                          ) : detailItems.length === 0 ? (
-                            <TableRow>
-                              <TableCell colSpan={5} className="text-center text-muted-foreground text-xs py-4">
-                                Không có sản phẩm
-                              </TableCell>
-                            </TableRow>
-                          ) : (
-                            detailItems.map((item) => (
-                              <TableRow key={item.id}>
-                                <TableCell className="font-mono text-xs">{item.products?.code || "—"}</TableCell>
-                                <TableCell className="text-sm">{item.products?.name || "—"}</TableCell>
-                                <TableCell className="text-right">{item.quantity}</TableCell>
-                                <TableCell className="text-right">{fmt(item.unit_price)}</TableCell>
-                                <TableCell className="text-right font-medium">{fmt(item.quantity * item.unit_price)}</TableCell>
-                              </TableRow>
-                            ))
-                          )}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </TabsContent>
-
-            {/* ─── Payment Details Tab ─────────────────────── */}
-            <TabsContent value="payments" className="flex-1 overflow-y-auto px-5 pb-2 mt-0">
-              {selectedOrder && (
-                <div className="py-4 space-y-3">
-                  <div className="border rounded-lg p-4 space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Phương thức</span>
-                      <span className="font-medium">{selectedOrder.payment_method === "cash" ? "Tiền mặt" : "Chuyển khoản"}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Tổng thanh toán</span>
-                      <span className="font-semibold">{fmt(selectedOrder.total_amount)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Thời gian</span>
-                      <span>{format(new Date(selectedOrder.created_at), "dd/MM/yyyy HH:mm:ss")}</span>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </TabsContent>
-          </Tabs>
-
-          {/* ─── Bottom Action Bar ─────────────────────────── */}
-          {selectedOrder && (
-            <div className="border-t p-3 flex items-center gap-2 flex-wrap bg-background print:hidden">
-              <Button variant="outline" size="sm" onClick={handlePrint}>
-                <Printer className="mr-1.5 h-3.5 w-3.5" /> In
-              </Button>
-              <Button variant="outline" size="sm" onClick={handleExportDetail}>
-                <FileDown className="mr-1.5 h-3.5 w-3.5" /> Xuất file
-              </Button>
-              <Button variant="outline" size="sm" onClick={handleCopy}>
-                <Copy className="mr-1.5 h-3.5 w-3.5" /> Sao chép
-              </Button>
-              {!isCancelled && (
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  className="ml-auto"
-                  onClick={() => setVoidTarget(selectedOrder)}
-                >
-                  <Ban className="mr-1.5 h-3.5 w-3.5" /> Hủy bỏ
-                </Button>
-              )}
-            </div>
-          )}
-        </SheetContent>
-      </Sheet>
 
       {/* ═══ SINGLE VOID CONFIRMATION ══════════════════════════ */}
       <AlertDialog open={!!voidTarget} onOpenChange={(open) => !open && setVoidTarget(null)}>
