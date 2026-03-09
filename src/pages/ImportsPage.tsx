@@ -875,6 +875,21 @@ const ImportsPage = () => {
         </SheetContent>
       </Sheet>
 
+      {/* ═══ BARCODE PRINT MODAL ══════════════════════════════ */}
+      <BarcodePrintModal
+        isOpen={isBarcodeModalOpen}
+        onClose={() => setIsBarcodeModalOpen(false)}
+        initialProducts={detailItems
+          .filter((item) => item.products)
+          .map((item) => ({
+            id: item.product_id,
+            code: item.products!.code,
+            name: item.products!.name,
+            sale_price: item.products!.sale_price,
+            defaultPrintQuantity: item.quantity,
+          }))}
+      />
+
       {/* ═══ VOID CONFIRMATION ═════════════════════════════════ */}
       <AlertDialog open={!!voidTarget} onOpenChange={(open) => !open && setVoidTarget(null)}>
         <AlertDialogContent>
