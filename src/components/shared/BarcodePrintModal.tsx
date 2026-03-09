@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useEffect } from "react";
+import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import Barcode from "react-barcode";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
