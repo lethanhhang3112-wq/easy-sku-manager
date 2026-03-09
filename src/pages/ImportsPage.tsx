@@ -853,6 +853,11 @@ const ImportsPage = () => {
                   <Button variant="outline" size="sm" onClick={handleCopy}>
                     <Copy className="mr-1.5 h-3.5 w-3.5" /> Sao chép
                   </Button>
+                  {!isCancelled && detailItems.length > 0 && (
+                    <Button variant="outline" size="sm" onClick={() => setIsBarcodeModalOpen(true)}>
+                      <Barcode className="mr-1.5 h-3.5 w-3.5" /> In tem mã
+                    </Button>
+                  )}
                   {!isCancelled && (
                     <Button
                       variant="destructive"
