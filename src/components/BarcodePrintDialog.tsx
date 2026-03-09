@@ -30,9 +30,9 @@ type PrintItem = ProductItem & { print_qty: number };
 type Step = "quantity" | "options" | "preview";
 
 const LAYOUTS = [
-  { value: "3", label: "3 nhãn / hàng (A4/Tomy)", cols: 3 },
-  { value: "2", label: "2 nhãn / hàng", cols: 2 },
-  { value: "1", label: "1 nhãn / hàng (Giấy cuộn)", cols: 1 },
+  { value: "3", label: "3 nhãn / hàng (A4/Tomy)", cols: 3, barWidth: 1.0, barHeight: 28, nameFontSize: "text-[9px]", priceFontSize: "text-[10px]", storeFontSize: "text-[8px]", codeFontSize: 8, maxW: "max-w-[680px]", padding: "p-1.5" },
+  { value: "2", label: "2 nhãn / hàng", cols: 2, barWidth: 1.4, barHeight: 36, nameFontSize: "text-[11px]", priceFontSize: "text-xs", storeFontSize: "text-[9px]", codeFontSize: 10, maxW: "max-w-[460px]", padding: "p-2" },
+  { value: "1", label: "1 nhãn / hàng (Giấy cuộn)", cols: 1, barWidth: 1.8, barHeight: 44, nameFontSize: "text-xs", priceFontSize: "text-sm", storeFontSize: "text-[10px]", codeFontSize: 12, maxW: "max-w-[280px]", padding: "p-3" },
 ];
 
 interface BarcodePrintDialogProps {
