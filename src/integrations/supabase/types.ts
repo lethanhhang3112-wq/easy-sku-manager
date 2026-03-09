@@ -35,32 +35,67 @@ export type Database = {
         }
         Relationships: []
       }
+      customer_groups: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       customers: {
         Row: {
           address: string | null
           code: string
           created_at: string
+          customer_group_id: string | null
           id: string
           name: string
           phone: string | null
+          status: string
         }
         Insert: {
           address?: string | null
           code: string
           created_at?: string
+          customer_group_id?: string | null
           id?: string
           name: string
           phone?: string | null
+          status?: string
         }
         Update: {
           address?: string | null
           code?: string
           created_at?: string
+          customer_group_id?: string | null
           id?: string
           name?: string
           phone?: string | null
+          status?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "customers_customer_group_id_fkey"
+            columns: ["customer_group_id"]
+            isOneToOne: false
+            referencedRelation: "customer_groups"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       import_order_items: {
         Row: {
