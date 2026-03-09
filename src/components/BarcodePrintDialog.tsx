@@ -30,9 +30,9 @@ type PrintItem = ProductItem & { print_qty: number };
 type Step = "quantity" | "options" | "preview";
 
 const LAYOUTS = [
-  { value: "3", label: "3 nhãn / hàng (A4/Tomy)", cols: 3 },
-  { value: "2", label: "2 nhãn / hàng", cols: 2 },
-  { value: "1", label: "1 nhãn / hàng (Giấy cuộn)", cols: 1 },
+  { value: "3", label: "3 nhãn / hàng (A4/Tomy)", cols: 3, barWidth: 1.0, barHeight: 28, nameFontSize: "text-[9px]", priceFontSize: "text-[10px]", storeFontSize: "text-[8px]", codeFontSize: 8, maxW: "max-w-[680px]", padding: "p-1.5" },
+  { value: "2", label: "2 nhãn / hàng", cols: 2, barWidth: 1.4, barHeight: 36, nameFontSize: "text-[11px]", priceFontSize: "text-xs", storeFontSize: "text-[9px]", codeFontSize: 10, maxW: "max-w-[460px]", padding: "p-2" },
+  { value: "1", label: "1 nhãn / hàng (Giấy cuộn)", cols: 1, barWidth: 1.8, barHeight: 44, nameFontSize: "text-xs", priceFontSize: "text-sm", storeFontSize: "text-[10px]", codeFontSize: 12, maxW: "max-w-[280px]", padding: "p-3" },
 ];
 
 interface BarcodePrintDialogProps {
@@ -260,34 +260,35 @@ export const BarcodePrintDialog = ({
                 id="barcode-print-area"
                 className={cn(
                   "grid gap-2 mx-auto bg-background p-2",
-                  selectedLayout.cols === 3 && "grid-cols-3 max-w-[680px]",
-                  selectedLayout.cols === 2 && "grid-cols-2 max-w-[460px]",
-                  selectedLayout.cols === 1 && "grid-cols-1 max-w-[240px]"
+                  selectedLayout.cols === 3 && "grid-cols-3",
+                  selectedLayout.cols === 2 && "grid-cols-2",
+                  selectedLayout.cols === 1 && "grid-cols-1",
+                  selectedLayout.maxW
                 )}
               >
                 {replicatedItems.map((item, idx) => (
                   <div
                     key={`${item.id}-${idx}`}
-                    className="border border-dashed border-border/60 p-2 flex flex-col items-center text-center"
+                    className={cn("border border-dashed border-border/60 flex flex-col items-center text-center", selectedLayout.padding)}
                   >
                     {showStoreName && storeName && (
-                      <div className="text-[9px] font-medium text-muted-foreground mb-0.5 truncate w-full">
+                      <div className={cn("font-medium text-muted-foreground mb-0.5 truncate w-full", selectedLayout.storeFontSize)}>
                         {storeName}
                       </div>
                     )}
-                    <div className="text-[10px] font-medium truncate w-full leading-tight mb-1">
+                    <div className={cn("font-medium truncate w-full leading-tight mb-1", selectedLayout.nameFontSize)}>
                       {item.name}
                     </div>
                     <Barcode
                       value={item.code}
-                      width={1.2}
-                      height={32}
-                      fontSize={10}
+                      width={selectedLayout.barWidth}
+                      height={selectedLayout.barHeight}
+                      fontSize={selectedLayout.codeFontSize}
                       margin={0}
                       displayValue={true}
                     />
                     {showPrice && (
-                      <div className="text-xs font-bold mt-1">
+                      <div className={cn("font-bold mt-1", selectedLayout.priceFontSize)}>
                         {formatCurrency(item.sale_price)}
                       </div>
                     )}
