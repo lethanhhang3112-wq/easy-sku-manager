@@ -59,6 +59,7 @@ const ProductsPage = () => {
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [ledgerProduct, setLedgerProduct] = useState<Product | null>(null);
   const [barcodeOpen, setBarcodeOpen] = useState(false);
+  const [barcodeProducts, setBarcodeProducts] = useState<Product[]>([]);
 
   // Edit sheet
   const [editProduct, setEditProduct] = useState<Product | null>(null);
@@ -408,7 +409,10 @@ const ProductsPage = () => {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setBarcodeOpen(true)}
+                onClick={() => {
+                  setBarcodeProducts(products.filter((p) => selectedIds.has(p.id)));
+                  setBarcodeOpen(true);
+                }}
               >
                 <Barcode className="mr-1.5 h-3.5 w-3.5" /> In tem mã
               </Button>
@@ -492,6 +496,12 @@ const ProductsPage = () => {
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem onClick={() => setLedgerProduct(p)}>
                               <History className="mr-2 h-4 w-4" /> Lịch sử kho
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => {
+                              setBarcodeProducts([p]);
+                              setBarcodeOpen(true);
+                            }}>
+                              <Barcode className="mr-2 h-4 w-4" /> In tem mã vạch
                             </DropdownMenuItem>
                             <DropdownMenuItem
                               onClick={() =>
@@ -586,6 +596,15 @@ const ProductsPage = () => {
                   Hủy
                 </Button>
                 <Button
+                  variant="outline"
+                  onClick={() => {
+                    setBarcodeProducts([editProduct]);
+                    setBarcodeOpen(true);
+                  }}
+                >
+                  <Barcode className="mr-1.5 h-4 w-4" /> In tem mã
+                </Button>
+                <Button
                   className="flex-1"
                   onClick={() => updateProductMutation.mutate()}
                   disabled={!editName.trim() || updateProductMutation.isPending}
@@ -636,7 +655,7 @@ const ProductsPage = () => {
       <BarcodePrintDialog
         open={barcodeOpen}
         onOpenChange={setBarcodeOpen}
-        products={products.filter((p) => selectedIds.has(p.id)).map((p) => ({
+        products={barcodeProducts.map((p) => ({
           id: p.id,
           code: p.code,
           name: p.name,
