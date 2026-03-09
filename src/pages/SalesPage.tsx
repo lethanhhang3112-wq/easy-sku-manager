@@ -51,7 +51,7 @@ type SalesOrder = {
   payment_method: string;
   created_at: string;
   status: string;
-  customers: { name: string } | null;
+  customers: { name: string; code: string } | null;
 };
 
 type DetailItem = {
