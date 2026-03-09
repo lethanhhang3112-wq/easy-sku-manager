@@ -359,7 +359,7 @@ const ImportsPage = () => {
   const handleExportCSV = (data: ImportOrder[]) => {
     const headers = ["Mã phiếu,Nhà cung cấp,Tổng tiền,Trạng thái,Ngày tạo"];
     const rows = data.map((o) =>
-      `${o.code},${o.suppliers?.name || ""},${o.total_amount},${STATUS_MAP[o.status]?.label || o.status},${format(new Date(o.created_at), "dd/MM/yyyy HH:mm")}`
+      `${o.code},${o.suppliers?.name || "Khách lẻ"},${o.total_amount},${STATUS_MAP[o.status]?.label || o.status},${format(new Date(o.created_at), "dd/MM/yyyy HH:mm")}`
     );
     const csv = [headers, ...rows].join("\n");
     const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
