@@ -95,6 +95,58 @@ export const BarcodePrintModal = ({
   const selectedLayout = LAYOUTS.find((l) => l.value === layout) || LAYOUTS[0];
 
   const handlePrint = () => {
+    // Inject dynamic print styles based on selected layout
+    const styleId = "barcode-print-styles";
+    let styleEl = document.getElementById(styleId);
+    if (!styleEl) {
+      styleEl = document.createElement("style");
+      styleEl.id = styleId;
+      document.head.appendChild(styleEl);
+    }
+
+    const isXprinter = selectedLayout.value === "xp350-2";
+    const pageWidth = selectedLayout.paperWidth || "210mm";
+    const pageHeight = selectedLayout.paperHeight || "297mm";
+
+    styleEl.textContent = `
+      @media print {
+        @page {
+          size: ${pageWidth} ${pageHeight || "auto"};
+          margin: 0;
+        }
+        body * { visibility: hidden !important; }
+        #barcode-print-area,
+        #barcode-print-area * { visibility: visible !important; }
+        #barcode-print-area {
+          position: fixed;
+          left: 0;
+          top: 0;
+          width: ${pageWidth};
+          padding: 0 !important;
+          margin: 0 !important;
+          gap: 0 !important;
+          ${isXprinter ? `
+            display: grid !important;
+            grid-template-columns: repeat(2, 1fr) !important;
+          ` : ""}
+        }
+        #barcode-print-area > div {
+          border: none !important;
+          page-break-inside: avoid;
+          ${isXprinter ? `
+            width: ${selectedLayout.labelWidth};
+            height: ${selectedLayout.labelHeight};
+            overflow: hidden;
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            justify-content: center !important;
+            padding: 1mm !important;
+          ` : ""}
+        }
+      }
+    `;
+
     window.print();
   };
 
