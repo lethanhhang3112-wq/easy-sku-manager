@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import Barcode from "react-barcode";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
@@ -55,21 +55,18 @@ export const BarcodePrintDialog = ({
   const [layout, setLayout] = useState("3");
   const printRef = useRef<HTMLDivElement>(null);
 
-  // Initialize items when dialog opens
-  const initItems = () => {
-    setItems(
-      products.map((p) => ({
-        ...p,
-        print_qty: 1,
-      }))
-    );
-    setStep("quantity");
-  };
-
-  const handleOpenChange = (v: boolean) => {
-    if (v) initItems();
-    onOpenChange(v);
-  };
+  // Initialize items when dialog opens with products
+  useEffect(() => {
+    if (open && products.length > 0) {
+      setItems(
+        products.map((p) => ({
+          ...p,
+          print_qty: 1,
+        }))
+      );
+      setStep("quantity");
+    }
+  }, [open, products]);
 
   const updateQty = (id: string, qty: number) => {
     setItems((prev) =>
@@ -101,7 +98,7 @@ export const BarcodePrintDialog = ({
   const totalLabels = items.reduce((s, i) => s + i.print_qty, 0);
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         className={cn(
           "p-0 flex flex-col",
