@@ -371,7 +371,26 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      search_products_unaccented: {
+        Args: { search_term: string }
+        Returns: {
+          category_id: string | null
+          code: string
+          cost_price: number
+          created_at: string
+          id: string
+          name: string
+          sale_price: number
+          stock_quantity: number
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "products"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      unaccent: { Args: { "": string }; Returns: string }
     }
     Enums: {
       [_ in never]: never
