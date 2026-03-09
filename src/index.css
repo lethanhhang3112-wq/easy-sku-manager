@@ -60,3 +60,20 @@
     font-family: 'Inter', sans-serif;
   }
 }
+
+/* ─── Barcode Print Styles ─── */
+@media print {
+  body * {
+    visibility: hidden !important;
+  }
+  #barcode-print-area,
+  #barcode-print-area * {
+    visibility: visible !important;
+  }
+  #barcode-print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+}
