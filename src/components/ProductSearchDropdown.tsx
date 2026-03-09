@@ -3,7 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useDebounce } from "@/hooks/use-debounce";
 import { Input } from "@/components/ui/input";
-import { Search, Loader2 } from "lucide-react";
+import { Search, Loader2, ScanLine } from "lucide-react";
+import { BarcodeScannerDialog } from "@/components/BarcodeScannerDialog";
 import { formatCurrency } from "@/components/CurrencyInput";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -44,6 +45,7 @@ export const ProductSearchDropdown = forwardRef<ProductSearchDropdownRef, Produc
 }, ref) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [isOpen, setIsOpen] = useState(false);
+  const [scannerOpen, setScannerOpen] = useState(false);
   const debouncedTerm = useDebounce(searchTerm, 300);
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -90,10 +92,16 @@ export const ProductSearchDropdown = forwardRef<ProductSearchDropdownRef, Produc
     setIsOpen(false);
   };
 
+  const handleScan = (code: string) => {
+    setSearchTerm(code);
+    setIsOpen(true);
+  };
+
   const showDropdown = isOpen && searchTerm.trim().length > 0;
 
   return (
-    <div ref={containerRef} className={`relative ${className || ""}`}>
+    <div ref={containerRef} className={`relative flex gap-1.5 ${className || ""}`}>
+      <div className="relative flex-1">
       <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
       {isFetching && (
         <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground animate-spin" />
@@ -159,6 +167,20 @@ export const ProductSearchDropdown = forwardRef<ProductSearchDropdownRef, Produc
           )}
         </div>
       )}
+      </div>
+      <button
+        type="button"
+        onClick={() => setScannerOpen(true)}
+        className="h-9 w-9 shrink-0 inline-flex items-center justify-center rounded-md border border-input bg-background hover:bg-accent transition-colors"
+        title="Quét mã vạch"
+      >
+        <ScanLine className="h-4 w-4" />
+      </button>
+      <BarcodeScannerDialog
+        open={scannerOpen}
+        onOpenChange={setScannerOpen}
+        onScan={handleScan}
+      />
     </div>
   );
 });
