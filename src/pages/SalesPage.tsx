@@ -108,12 +108,9 @@ const SalesPage = () => {
   // Bulk select
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
-  // Detail state
-  const [selectedOrder, setSelectedOrder] = useState<SalesOrder | null>(null);
-  const [detailOpen, setDetailOpen] = useState(false);
-
-  // Void confirm
-  const [voidTarget, setVoidTarget] = useState<SalesOrder | null>(null);
+  // Detail state — inline expansion
+  const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
+  const selectedOrder = salesOrders.find((o) => o.id === expandedOrderId) || null;
   const [bulkVoidOpen, setBulkVoidOpen] = useState(false);
 
   // Bulk update dialog
