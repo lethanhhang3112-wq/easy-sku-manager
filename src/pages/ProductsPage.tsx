@@ -497,6 +497,12 @@ const ProductsPage = () => {
                             <DropdownMenuItem onClick={() => setLedgerProduct(p)}>
                               <History className="mr-2 h-4 w-4" /> Lịch sử kho
                             </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => {
+                              setBarcodeProducts([p]);
+                              setBarcodeOpen(true);
+                            }}>
+                              <Barcode className="mr-2 h-4 w-4" /> In tem mã vạch
+                            </DropdownMenuItem>
                             <DropdownMenuItem
                               onClick={() =>
                                 toggleStatusMutation.mutate({
