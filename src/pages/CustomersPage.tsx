@@ -381,13 +381,12 @@ const CustomersPage = () => {
   // Export
   const handleExportExcel = useCallback(() => {
     const exportData = filtered.map((c) => ({
-      "Mã KH": c.code,
+      "Mã khách hàng": c.code,
       "Tên khách hàng": c.name,
       "Điện thoại": c.phone || "",
-      "Địa chỉ": c.address || "",
-      "Nhóm KH": c.customer_groups?.name || "",
+      "Nợ hiện tại": salesAggregates[c.id]?.debt || 0,
       "Tổng bán": salesAggregates[c.id]?.spend || 0,
-      "Công nợ": salesAggregates[c.id]?.debt || 0,
+      "Tổng bán trừ trả hàng": salesAggregates[c.id]?.spend || 0,
     }));
     const ws = XLSX.utils.json_to_sheet(exportData);
     const wb = XLSX.utils.book_new();
