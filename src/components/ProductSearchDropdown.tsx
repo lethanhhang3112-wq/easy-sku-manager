@@ -67,21 +67,16 @@ export const ProductSearchDropdown = forwardRef<ProductSearchDropdownRef, Produc
     queryKey: ["product-search", debouncedTerm],
     queryFn: async () => {
       if (!debouncedTerm.trim()) return [];
-      const term = `%${debouncedTerm.trim()}%`;
-      let query = supabase
-        .from("products")
-        .select("id, code, name, cost_price, sale_price, stock_quantity")
-        .or(`name.ilike.${term},code.ilike.${term}`)
-        .order("name")
-        .limit(10);
-
-      if (onlyInStock) {
-        query = query.gt("stock_quantity", 0);
-      }
-
-      const { data, error } = await query;
+      const { data, error } = await supabase.rpc("search_products_unaccented", {
+        search_term: debouncedTerm.trim(),
+      });
       if (error) throw error;
-      return (data as ProductResult[]).filter((p) => !excludeIds.includes(p.id));
+      const products = (data as ProductResult[]) || [];
+      let filtered = products.filter((p) => !excludeIds.includes(p.id));
+      if (onlyInStock) {
+        filtered = filtered.filter((p) => p.stock_quantity > 0);
+      }
+      return filtered.slice(0, 10);
     },
     enabled: debouncedTerm.trim().length > 0,
     staleTime: 10_000,
