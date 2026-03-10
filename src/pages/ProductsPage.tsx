@@ -1,5 +1,6 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
@@ -54,6 +55,7 @@ type StockFilter = "all" | "low" | "in_stock" | "out_of_stock";
 
 const ProductsPage = () => {
   const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   // UI state
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -219,7 +221,7 @@ const ProductsPage = () => {
   });
 
   // Handlers
-  const openEditSheet = (p: Product) => {
+  const openEditSheet = useCallback((p: Product) => {
     setEditProduct(p);
     setEditName(p.name);
     setEditCode(p.code);
@@ -227,7 +229,18 @@ const ProductsPage = () => {
     setEditCostPrice(p.cost_price);
     setEditSalePrice(p.sale_price);
     setEditStatus(p.status || "active");
-  };
+  }, []);
+
+  // Auto-open from URL param
+  useEffect(() => {
+    const productId = searchParams.get("productId");
+    if (productId && products.length > 0) {
+      const found = products.find((p) => p.id === productId);
+      if (found && editProduct?.id !== productId) {
+        openEditSheet(found);
+      }
+    }
+  }, [searchParams, products, openEditSheet, editProduct?.id]);
 
   const toggleSelect = (id: string) => {
     setSelectedIds((prev) => {
@@ -540,7 +553,7 @@ const ProductsPage = () => {
       </div>
 
       {/* ═══ EDIT PRODUCT SHEET ═══ */}
-      <Sheet open={!!editProduct} onOpenChange={(o) => { if (!o) setEditProduct(null); }}>
+      <Sheet open={!!editProduct} onOpenChange={(o) => { if (!o) { setEditProduct(null); if (searchParams.has("productId")) setSearchParams((p) => { p.delete("productId"); return p; }, { replace: true }); } }}>
         <SheetContent className="sm:max-w-lg overflow-y-auto">
           <SheetHeader>
             <SheetTitle>Chỉnh sửa sản phẩm</SheetTitle>

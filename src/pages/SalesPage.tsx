@@ -1,5 +1,5 @@
-import { useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useMemo, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
@@ -34,6 +34,7 @@ import { cn } from "@/lib/utils";
 import { useDebounce } from "@/hooks/use-debounce";
 import { formatCurrency } from "@/components/CurrencyInput";
 import { SalesOrderDetailRow } from "@/components/sales/SalesOrderDetailRow";
+import { EntityLink } from "@/components/shared/EntityLink";
 
 // ─── Types ───────────────────────────────────────────────────────
 type SalesOrder = {
@@ -84,6 +85,7 @@ function getTimeDates(value: string): { start?: Date; end?: Date } {
 // ═════════════════════════════════════════════════════════════════
 const SalesPage = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
 
   // Filter state
@@ -124,6 +126,17 @@ const SalesPage = () => {
       return data as SalesOrder[];
     },
   });
+
+  // Auto-open from URL param
+  useEffect(() => {
+    const invoiceId = searchParams.get("invoiceId");
+    if (invoiceId && salesOrders.length > 0) {
+      const found = salesOrders.find((o) => o.id === invoiceId);
+      if (found) {
+        setExpandedOrderId(invoiceId);
+      }
+    }
+  }, [searchParams, salesOrders]);
 
   // ─── Filter & Sort ──────────────────────────────────────────
   const filteredOrders = useMemo(() => {
@@ -247,7 +260,14 @@ const SalesPage = () => {
 
   // ─── Handlers ──────────────────────────────────────────────
   const toggleExpand = (orderId: string) => {
-    setExpandedOrderId((prev) => (prev === orderId ? null : orderId));
+    setExpandedOrderId((prev) => {
+      const next = prev === orderId ? null : orderId;
+      // Clear URL param when collapsing
+      if (!next && searchParams.has("invoiceId")) {
+        setSearchParams((p) => { p.delete("invoiceId"); return p; }, { replace: true });
+      }
+      return next;
+    });
   };
 
   const toggleSort = (field: SortField) => {
@@ -566,8 +586,14 @@ const SalesPage = () => {
                         <TableCell className="text-muted-foreground text-sm whitespace-nowrap">
                           {format(new Date(o.created_at), "dd/MM/yyyy HH:mm")}
                         </TableCell>
-                        <TableCell className="font-mono text-primary">{o.code}</TableCell>
-                        <TableCell className="text-muted-foreground text-sm">{o.customers?.code || "—"}</TableCell>
+                        <TableCell className="font-mono text-xs">
+                          <EntityLink type="invoice" id={o.id} code={o.code} />
+                        </TableCell>
+                        <TableCell className="text-sm">
+                          {o.customers ? (
+                            <EntityLink type="customer" id={o.customer_id!} code={o.customers.code} className="text-muted-foreground" />
+                          ) : "—"}
+                        </TableCell>
                         <TableCell>{o.customers?.name || "Khách lẻ"}</TableCell>
                         <TableCell className="text-right font-medium">{fmt(o.total_amount)}</TableCell>
                         <TableCell className="text-right text-muted-foreground">{fmt(discount)}</TableCell>

@@ -1,5 +1,6 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
@@ -37,6 +38,7 @@ import { cn } from "@/lib/utils";
 import { useDebounce } from "@/hooks/use-debounce";
 import { formatCurrency } from "@/components/CurrencyInput";
 import * as XLSX from "xlsx";
+import { EntityLink } from "@/components/shared/EntityLink";
 
 // ─── Types ───────────────────────────────────────────────────
 type Customer = {
@@ -89,6 +91,7 @@ const STATUS_MAP: Record<string, { label: string; variant: "default" | "secondar
 // ═════════════════════════════════════════════════════════════
 const CustomersPage = () => {
   const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   // UI state
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -178,6 +181,17 @@ const CustomersPage = () => {
     },
     enabled: !!detailCustomer,
   });
+
+  // Auto-open from URL param
+  useEffect(() => {
+    const customerId = searchParams.get("customerId");
+    if (customerId && customers.length > 0) {
+      const found = customers.find((c) => c.id === customerId);
+      if (found && detailCustomer?.id !== customerId) {
+        setDetailCustomer(found);
+      }
+    }
+  }, [searchParams, customers, detailCustomer?.id]);
 
   // ─── Filter & Sort ──────────────────────────────────────
   const filtered = useMemo(() => {
@@ -557,7 +571,9 @@ const CustomersPage = () => {
                           onCheckedChange={() => toggleSelect(c.id)}
                         />
                       </TableCell>
-                      <TableCell className="font-mono text-xs">{c.code}</TableCell>
+                      <TableCell className="font-mono text-xs">
+                        <EntityLink type="customer" id={c.id} code={c.code} />
+                      </TableCell>
                       <TableCell className="font-medium">{c.name}</TableCell>
                       <TableCell className="text-sm">{c.phone || "—"}</TableCell>
                       <TableCell className={cn("text-right", debt > 0 && "text-destructive font-medium")}>
@@ -603,7 +619,7 @@ const CustomersPage = () => {
       </div>
 
       {/* ═══ DETAIL SHEET ═══ */}
-      <Sheet open={!!detailCustomer} onOpenChange={(o) => { if (!o) setDetailCustomer(null); }}>
+      <Sheet open={!!detailCustomer} onOpenChange={(o) => { if (!o) { setDetailCustomer(null); if (searchParams.has("customerId")) setSearchParams((p) => { p.delete("customerId"); return p; }, { replace: true }); } }}>
         <SheetContent className="sm:max-w-2xl overflow-y-auto">
           <SheetHeader>
             <SheetTitle className="flex items-center gap-2">
@@ -715,7 +731,9 @@ const CustomersPage = () => {
                         const st = STATUS_MAP[o.status] || { label: o.status, variant: "secondary" as const };
                         return (
                           <TableRow key={o.id}>
-                            <TableCell className="font-mono text-xs">{o.code}</TableCell>
+                            <TableCell className="font-mono text-xs">
+                              <EntityLink type="invoice" id={o.id} code={o.code} />
+                            </TableCell>
                             <TableCell className="text-xs">{format(new Date(o.created_at), "dd/MM/yyyy HH:mm")}</TableCell>
                             <TableCell className="text-right font-medium">{formatCurrency(o.total_amount)}</TableCell>
                             <TableCell className="text-xs capitalize">{o.payment_method}</TableCell>
@@ -760,7 +778,9 @@ const CustomersPage = () => {
                             .filter((o) => o.status !== "cancelled")
                             .map((o) => (
                               <TableRow key={o.id}>
-                                <TableCell className="font-mono text-xs">{o.code}</TableCell>
+                                <TableCell className="font-mono text-xs">
+                                  <EntityLink type="invoice" id={o.id} code={o.code} />
+                                </TableCell>
                                 <TableCell className="text-xs">{format(new Date(o.created_at), "dd/MM/yyyy HH:mm")}</TableCell>
                                 <TableCell className="text-right font-medium">{formatCurrency(o.total_amount)}</TableCell>
                               </TableRow>

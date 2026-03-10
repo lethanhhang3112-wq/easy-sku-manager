@@ -1,5 +1,6 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
@@ -34,6 +35,7 @@ import { cn } from "@/lib/utils";
 import { useDebounce } from "@/hooks/use-debounce";
 import { formatCurrency } from "@/components/CurrencyInput";
 import * as XLSX from "xlsx";
+import { EntityLink } from "@/components/shared/EntityLink";
 
 // ─── Types ───────────────────────────────────────────────────
 type Supplier = {
@@ -95,6 +97,7 @@ async function generateSupplierCode(): Promise<string> {
 // ═════════════════════════════════════════════════════════════
 const SuppliersPage = () => {
   const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   // UI state
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -196,6 +199,17 @@ const SuppliersPage = () => {
     },
     enabled: !!detailSupplier,
   });
+
+  // Auto-open from URL param
+  useEffect(() => {
+    const supplierId = searchParams.get("supplierId");
+    if (supplierId && suppliers.length > 0) {
+      const found = suppliers.find((s) => s.id === supplierId);
+      if (found && detailSupplier?.id !== supplierId) {
+        setDetailSupplier(found);
+      }
+    }
+  }, [searchParams, suppliers, detailSupplier?.id]);
 
   // ─── Filter & Sort ──────────────────────────────────────
   const filtered = useMemo(() => {
@@ -569,7 +583,9 @@ const SuppliersPage = () => {
                           onCheckedChange={() => toggleSelect(s.id)}
                         />
                       </TableCell>
-                      <TableCell className="font-mono text-xs">{s.code}</TableCell>
+                      <TableCell className="font-mono text-xs">
+                        <EntityLink type="supplier" id={s.id} code={s.code} />
+                      </TableCell>
                       <TableCell className="font-medium">{s.name}</TableCell>
                       <TableCell className="text-sm">{s.phone || "—"}</TableCell>
                       <TableCell className={cn("text-right", debt > 0 && "text-destructive font-medium")}>
@@ -614,7 +630,7 @@ const SuppliersPage = () => {
       </div>
 
       {/* ═══ DETAIL SHEET ═══ */}
-      <Sheet open={!!detailSupplier} onOpenChange={(o) => { if (!o) setDetailSupplier(null); }}>
+      <Sheet open={!!detailSupplier} onOpenChange={(o) => { if (!o) { setDetailSupplier(null); if (searchParams.has("supplierId")) setSearchParams((p) => { p.delete("supplierId"); return p; }, { replace: true }); } }}>
         <SheetContent className="sm:max-w-2xl overflow-y-auto">
           <SheetHeader>
             <SheetTitle className="flex items-center gap-2">
@@ -726,7 +742,9 @@ const SuppliersPage = () => {
                         const st = STATUS_MAP[o.status] || { label: o.status, variant: "secondary" as const };
                         return (
                           <TableRow key={o.id}>
-                            <TableCell className="font-mono text-xs">{o.code}</TableCell>
+                            <TableCell className="font-mono text-xs">
+                              <EntityLink type="import" id={o.id} code={o.code} />
+                            </TableCell>
                             <TableCell className="text-xs">{format(new Date(o.created_at), "dd/MM/yyyy HH:mm")}</TableCell>
                             <TableCell className="text-right font-medium">{formatCurrency(o.total_amount)}</TableCell>
                             <TableCell className="text-right">{formatCurrency(o.amount_paid)}</TableCell>

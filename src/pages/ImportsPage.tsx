@@ -1,5 +1,5 @@
-import { useState, useMemo, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useMemo, useCallback, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
@@ -42,6 +42,7 @@ import { cn } from "@/lib/utils";
 import { useDebounce } from "@/hooks/use-debounce";
 import { formatCurrency } from "@/components/CurrencyInput";
 import { BarcodePrintModal } from "@/components/shared/BarcodePrintModal";
+import { EntityLink } from "@/components/shared/EntityLink";
 
 
 // ─── Types ───────────────────────────────────────────────────────
@@ -110,6 +111,7 @@ function getTimeDates(value: string): { start?: Date; end?: Date } {
 // ═════════════════════════════════════════════════════════════════
 const ImportsPage = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
 
   // Filter state
@@ -314,7 +316,7 @@ const ImportsPage = () => {
   });
 
   // ─── Handlers ──────────────────────────────────────────────
-  const openDetail = (order: ImportOrder) => {
+  const openDetail = useCallback((order: ImportOrder) => {
     setSelectedOrder(order);
     setIsEditing(false);
     setEditNotes(order.notes || "");
@@ -323,7 +325,18 @@ const ImportsPage = () => {
     setEditDate(dt.toISOString().slice(0, 16));
     setEditSupplierId(order.supplier_id);
     setDetailOpen(true);
-  };
+  }, []);
+
+  // Auto-open from URL param
+  useEffect(() => {
+    const importId = searchParams.get("importId");
+    if (importId && importOrders.length > 0) {
+      const found = importOrders.find((o) => o.id === importId);
+      if (found && selectedOrder?.id !== importId) {
+        openDetail(found);
+      }
+    }
+  }, [searchParams, importOrders, openDetail, selectedOrder?.id]);
 
   const toggleSort = (field: SortField) => {
     if (sortField === field) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
@@ -610,11 +623,17 @@ const ImportsPage = () => {
                       <TableCell onClick={(e) => { e.stopPropagation(); setStarredIds(prev => { const next = new Set(prev); if (next.has(o.id)) next.delete(o.id); else next.add(o.id); return next; }); }}>
                         <Star className={cn("h-4 w-4 transition-colors", isStarred ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground/40 hover:text-yellow-400")} />
                       </TableCell>
-                      <TableCell className="font-mono text-primary">{o.code}</TableCell>
+                      <TableCell className="font-mono text-xs">
+                        <EntityLink type="import" id={o.id} code={o.code} />
+                      </TableCell>
                       <TableCell className="text-muted-foreground text-sm whitespace-nowrap">
                         {format(new Date(o.created_at), "dd/MM/yyyy HH:mm")}
                       </TableCell>
-                      <TableCell className="text-muted-foreground text-sm">{o.suppliers?.code || "-"}</TableCell>
+                      <TableCell className="text-sm">
+                        {o.suppliers ? (
+                          <EntityLink type="supplier" id={o.supplier_id!} code={o.suppliers.code} className="text-muted-foreground" />
+                        ) : "-"}
+                      </TableCell>
                       <TableCell>{o.suppliers?.name || "Khách lẻ"}</TableCell>
                       <TableCell className="text-right font-medium">{totalQty}</TableCell>
                       <TableCell className="text-right text-muted-foreground">{totalItems}</TableCell>
@@ -633,7 +652,7 @@ const ImportsPage = () => {
       </div>
 
       {/* ═══ DETAIL SHEET ══════════════════════════════════════ */}
-      <Sheet open={detailOpen} onOpenChange={(open) => { setDetailOpen(open); if (!open) setSelectedOrder(null); }}>
+      <Sheet open={detailOpen} onOpenChange={(open) => { setDetailOpen(open); if (!open) { setSelectedOrder(null); if (searchParams.has("importId")) setSearchParams((p) => { p.delete("importId"); return p; }, { replace: true }); } }}>
         <SheetContent side="right" className="w-full sm:max-w-2xl flex flex-col p-0">
           <SheetHeader className="p-5 pb-0">
             <SheetTitle className="flex items-center gap-2">
@@ -767,7 +786,9 @@ const ImportsPage = () => {
                           ) : (
                             detailItems.map((item) => (
                               <TableRow key={item.id}>
-                                <TableCell className="font-mono text-xs">{item.products?.code || "—"}</TableCell>
+                                <TableCell className="font-mono text-xs">
+                                  <EntityLink type="product" id={item.product_id} code={item.products?.code || "—"} />
+                                </TableCell>
                                 <TableCell className="text-sm">{item.products?.name || "—"}</TableCell>
                                 <TableCell className="text-right">{item.quantity}</TableCell>
                                 <TableCell className="text-right">{fmt(item.unit_cost)}</TableCell>
