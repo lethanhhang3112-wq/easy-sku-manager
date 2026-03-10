@@ -260,7 +260,14 @@ const SalesPage = () => {
 
   // ─── Handlers ──────────────────────────────────────────────
   const toggleExpand = (orderId: string) => {
-    setExpandedOrderId((prev) => (prev === orderId ? null : orderId));
+    setExpandedOrderId((prev) => {
+      const next = prev === orderId ? null : orderId;
+      // Clear URL param when collapsing
+      if (!next && searchParams.has("invoiceId")) {
+        setSearchParams((p) => { p.delete("invoiceId"); return p; }, { replace: true });
+      }
+      return next;
+    });
   };
 
   const toggleSort = (field: SortField) => {
