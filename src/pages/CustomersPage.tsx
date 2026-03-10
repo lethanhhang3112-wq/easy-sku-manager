@@ -619,7 +619,7 @@ const CustomersPage = () => {
       </div>
 
       {/* ═══ DETAIL SHEET ═══ */}
-      <Sheet open={!!detailCustomer} onOpenChange={(o) => { if (!o) setDetailCustomer(null); }}>
+      <Sheet open={!!detailCustomer} onOpenChange={(o) => { if (!o) { setDetailCustomer(null); if (searchParams.has("customerId")) setSearchParams((p) => { p.delete("customerId"); return p; }, { replace: true }); } }}>
         <SheetContent className="sm:max-w-2xl overflow-y-auto">
           <SheetHeader>
             <SheetTitle className="flex items-center gap-2">
