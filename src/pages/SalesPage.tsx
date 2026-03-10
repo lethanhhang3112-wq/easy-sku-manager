@@ -114,6 +114,17 @@ const SalesPage = () => {
   // Star/favorite (local state)
   const [starredIds, setStarredIds] = useState<Set<string>>(new Set());
 
+  // Auto-open from URL param
+  useEffect(() => {
+    const invoiceId = searchParams.get("invoiceId");
+    if (invoiceId && salesOrders.length > 0) {
+      const found = salesOrders.find((o) => o.id === invoiceId);
+      if (found) {
+        setExpandedOrderId(invoiceId);
+      }
+    }
+  }, [searchParams, salesOrders]);
+
   // ─── Queries ─────────────────────────────────────────────────
   const { data: salesOrders = [], isLoading } = useQuery({
     queryKey: ["sales_orders"],
