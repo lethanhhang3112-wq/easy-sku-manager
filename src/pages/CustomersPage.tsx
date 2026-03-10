@@ -778,7 +778,9 @@ const CustomersPage = () => {
                             .filter((o) => o.status !== "cancelled")
                             .map((o) => (
                               <TableRow key={o.id}>
-                                <TableCell className="font-mono text-xs">{o.code}</TableCell>
+                                <TableCell className="font-mono text-xs">
+                                  <EntityLink type="invoice" id={o.id} code={o.code} />
+                                </TableCell>
                                 <TableCell className="text-xs">{format(new Date(o.created_at), "dd/MM/yyyy HH:mm")}</TableCell>
                                 <TableCell className="text-right font-medium">{formatCurrency(o.total_amount)}</TableCell>
                               </TableRow>
