@@ -182,6 +182,17 @@ const CustomersPage = () => {
     enabled: !!detailCustomer,
   });
 
+  // Auto-open from URL param
+  useEffect(() => {
+    const customerId = searchParams.get("customerId");
+    if (customerId && customers.length > 0) {
+      const found = customers.find((c) => c.id === customerId);
+      if (found && detailCustomer?.id !== customerId) {
+        setDetailCustomer(found);
+      }
+    }
+  }, [searchParams, customers, detailCustomer?.id]);
+
   // ─── Filter & Sort ──────────────────────────────────────
   const filtered = useMemo(() => {
     let result = customers;
