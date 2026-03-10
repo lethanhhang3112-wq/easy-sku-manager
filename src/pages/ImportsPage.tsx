@@ -623,11 +623,17 @@ const ImportsPage = () => {
                       <TableCell onClick={(e) => { e.stopPropagation(); setStarredIds(prev => { const next = new Set(prev); if (next.has(o.id)) next.delete(o.id); else next.add(o.id); return next; }); }}>
                         <Star className={cn("h-4 w-4 transition-colors", isStarred ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground/40 hover:text-yellow-400")} />
                       </TableCell>
-                      <TableCell className="font-mono text-primary">{o.code}</TableCell>
+                      <TableCell className="font-mono text-xs">
+                        <EntityLink type="import" id={o.id} code={o.code} />
+                      </TableCell>
                       <TableCell className="text-muted-foreground text-sm whitespace-nowrap">
                         {format(new Date(o.created_at), "dd/MM/yyyy HH:mm")}
                       </TableCell>
-                      <TableCell className="text-muted-foreground text-sm">{o.suppliers?.code || "-"}</TableCell>
+                      <TableCell className="text-sm">
+                        {o.suppliers ? (
+                          <EntityLink type="supplier" id={o.supplier_id!} code={o.suppliers.code} className="text-muted-foreground" />
+                        ) : "-"}
+                      </TableCell>
                       <TableCell>{o.suppliers?.name || "Khách lẻ"}</TableCell>
                       <TableCell className="text-right font-medium">{totalQty}</TableCell>
                       <TableCell className="text-right text-muted-foreground">{totalItems}</TableCell>
