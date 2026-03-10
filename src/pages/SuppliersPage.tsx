@@ -35,6 +35,7 @@ import { cn } from "@/lib/utils";
 import { useDebounce } from "@/hooks/use-debounce";
 import { formatCurrency } from "@/components/CurrencyInput";
 import * as XLSX from "xlsx";
+import { EntityLink } from "@/components/shared/EntityLink";
 
 // ─── Types ───────────────────────────────────────────────────
 type Supplier = {
