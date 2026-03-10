@@ -646,7 +646,7 @@ const ImportsPage = () => {
       </div>
 
       {/* ═══ DETAIL SHEET ══════════════════════════════════════ */}
-      <Sheet open={detailOpen} onOpenChange={(open) => { setDetailOpen(open); if (!open) setSelectedOrder(null); }}>
+      <Sheet open={detailOpen} onOpenChange={(open) => { setDetailOpen(open); if (!open) { setSelectedOrder(null); if (searchParams.has("importId")) setSearchParams((p) => { p.delete("importId"); return p; }, { replace: true }); } }}>
         <SheetContent side="right" className="w-full sm:max-w-2xl flex flex-col p-0">
           <SheetHeader className="p-5 pb-0">
             <SheetTitle className="flex items-center gap-2">
