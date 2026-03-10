@@ -221,7 +221,7 @@ const ProductsPage = () => {
   });
 
   // Handlers
-  const openEditSheet = (p: Product) => {
+  const openEditSheet = useCallback((p: Product) => {
     setEditProduct(p);
     setEditName(p.name);
     setEditCode(p.code);
@@ -229,7 +229,18 @@ const ProductsPage = () => {
     setEditCostPrice(p.cost_price);
     setEditSalePrice(p.sale_price);
     setEditStatus(p.status || "active");
-  };
+  }, []);
+
+  // Auto-open from URL param
+  useEffect(() => {
+    const productId = searchParams.get("productId");
+    if (productId && products.length > 0) {
+      const found = products.find((p) => p.id === productId);
+      if (found && editProduct?.id !== productId) {
+        openEditSheet(found);
+      }
+    }
+  }, [searchParams, products, openEditSheet, editProduct?.id]);
 
   const toggleSelect = (id: string) => {
     setSelectedIds((prev) => {
