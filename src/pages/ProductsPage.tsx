@@ -55,6 +55,7 @@ type StockFilter = "all" | "low" | "in_stock" | "out_of_stock";
 
 const ProductsPage = () => {
   const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   // UI state
   const [sidebarOpen, setSidebarOpen] = useState(true);
