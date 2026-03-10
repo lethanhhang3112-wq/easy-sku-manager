@@ -85,6 +85,7 @@ function getTimeDates(value: string): { start?: Date; end?: Date } {
 // ═════════════════════════════════════════════════════════════════
 const SalesPage = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
 
   // Filter state
