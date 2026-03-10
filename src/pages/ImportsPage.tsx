@@ -316,7 +316,7 @@ const ImportsPage = () => {
   });
 
   // ─── Handlers ──────────────────────────────────────────────
-  const openDetail = (order: ImportOrder) => {
+  const openDetail = useCallback((order: ImportOrder) => {
     setSelectedOrder(order);
     setIsEditing(false);
     setEditNotes(order.notes || "");
@@ -325,7 +325,18 @@ const ImportsPage = () => {
     setEditDate(dt.toISOString().slice(0, 16));
     setEditSupplierId(order.supplier_id);
     setDetailOpen(true);
-  };
+  }, []);
+
+  // Auto-open from URL param
+  useEffect(() => {
+    const importId = searchParams.get("importId");
+    if (importId && importOrders.length > 0) {
+      const found = importOrders.find((o) => o.id === importId);
+      if (found && selectedOrder?.id !== importId) {
+        openDetail(found);
+      }
+    }
+  }, [searchParams, importOrders, openDetail, selectedOrder?.id]);
 
   const toggleSort = (field: SortField) => {
     if (sortField === field) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
