@@ -583,7 +583,9 @@ const SuppliersPage = () => {
                           onCheckedChange={() => toggleSelect(s.id)}
                         />
                       </TableCell>
-                      <TableCell className="font-mono text-xs">{s.code}</TableCell>
+                      <TableCell className="font-mono text-xs">
+                        <EntityLink type="supplier" id={s.id} code={s.code} />
+                      </TableCell>
                       <TableCell className="font-medium">{s.name}</TableCell>
                       <TableCell className="text-sm">{s.phone || "—"}</TableCell>
                       <TableCell className={cn("text-right", debt > 0 && "text-destructive font-medium")}>

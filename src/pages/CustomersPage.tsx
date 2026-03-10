@@ -571,7 +571,9 @@ const CustomersPage = () => {
                           onCheckedChange={() => toggleSelect(c.id)}
                         />
                       </TableCell>
-                      <TableCell className="font-mono text-xs">{c.code}</TableCell>
+                      <TableCell className="font-mono text-xs">
+                        <EntityLink type="customer" id={c.id} code={c.code} />
+                      </TableCell>
                       <TableCell className="font-medium">{c.name}</TableCell>
                       <TableCell className="text-sm">{c.phone || "—"}</TableCell>
                       <TableCell className={cn("text-right", debt > 0 && "text-destructive font-medium")}>
