@@ -204,7 +204,9 @@ export const SalesOrderDetailRow = ({
                           const total = item.quantity * salePrice;
                           return (
                             <TableRow key={item.id}>
-                              <TableCell className="font-mono text-xs text-primary">{item.products?.code || "—"}</TableCell>
+                              <TableCell className="font-mono text-xs">
+                                <EntityLink type="product" id={item.product_id} code={item.products?.code || "—"} />
+                              </TableCell>
                               <TableCell className="text-sm">{item.products?.name || "—"}</TableCell>
                               <TableCell className="text-right">{item.quantity}</TableCell>
                               <TableCell className="text-right">{fmt(item.unit_price)}</TableCell>

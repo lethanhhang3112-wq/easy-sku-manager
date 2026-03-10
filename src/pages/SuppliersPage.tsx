@@ -742,7 +742,9 @@ const SuppliersPage = () => {
                         const st = STATUS_MAP[o.status] || { label: o.status, variant: "secondary" as const };
                         return (
                           <TableRow key={o.id}>
-                            <TableCell className="font-mono text-xs">{o.code}</TableCell>
+                            <TableCell className="font-mono text-xs">
+                              <EntityLink type="import" id={o.id} code={o.code} />
+                            </TableCell>
                             <TableCell className="text-xs">{format(new Date(o.created_at), "dd/MM/yyyy HH:mm")}</TableCell>
                             <TableCell className="text-right font-medium">{formatCurrency(o.total_amount)}</TableCell>
                             <TableCell className="text-right">{formatCurrency(o.amount_paid)}</TableCell>
