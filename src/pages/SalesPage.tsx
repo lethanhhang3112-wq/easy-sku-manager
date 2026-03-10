@@ -586,8 +586,14 @@ const SalesPage = () => {
                         <TableCell className="text-muted-foreground text-sm whitespace-nowrap">
                           {format(new Date(o.created_at), "dd/MM/yyyy HH:mm")}
                         </TableCell>
-                        <TableCell className="font-mono text-primary">{o.code}</TableCell>
-                        <TableCell className="text-muted-foreground text-sm">{o.customers?.code || "—"}</TableCell>
+                        <TableCell className="font-mono text-xs">
+                          <EntityLink type="invoice" id={o.id} code={o.code} />
+                        </TableCell>
+                        <TableCell className="text-sm">
+                          {o.customers ? (
+                            <EntityLink type="customer" id={o.customer_id!} code={o.customers.code} className="text-muted-foreground" />
+                          ) : "—"}
+                        </TableCell>
                         <TableCell>{o.customers?.name || "Khách lẻ"}</TableCell>
                         <TableCell className="text-right font-medium">{fmt(o.total_amount)}</TableCell>
                         <TableCell className="text-right text-muted-foreground">{fmt(discount)}</TableCell>
