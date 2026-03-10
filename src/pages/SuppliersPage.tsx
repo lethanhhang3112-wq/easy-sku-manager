@@ -97,6 +97,7 @@ async function generateSupplierCode(): Promise<string> {
 // ═════════════════════════════════════════════════════════════
 const SuppliersPage = () => {
   const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   // UI state
   const [sidebarOpen, setSidebarOpen] = useState(true);

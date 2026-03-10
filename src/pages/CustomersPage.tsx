@@ -91,6 +91,7 @@ const STATUS_MAP: Record<string, { label: string; variant: "default" | "secondar
 // ═════════════════════════════════════════════════════════════
 const CustomersPage = () => {
   const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   // UI state
   const [sidebarOpen, setSidebarOpen] = useState(true);

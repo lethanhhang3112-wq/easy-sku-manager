@@ -553,7 +553,7 @@ const ProductsPage = () => {
       </div>
 
       {/* ═══ EDIT PRODUCT SHEET ═══ */}
-      <Sheet open={!!editProduct} onOpenChange={(o) => { if (!o) setEditProduct(null); }}>
+      <Sheet open={!!editProduct} onOpenChange={(o) => { if (!o) { setEditProduct(null); if (searchParams.has("productId")) setSearchParams((p) => { p.delete("productId"); return p; }, { replace: true }); } }}>
         <SheetContent className="sm:max-w-lg overflow-y-auto">
           <SheetHeader>
             <SheetTitle>Chỉnh sửa sản phẩm</SheetTitle>
