@@ -34,6 +34,7 @@ import { cn } from "@/lib/utils";
 import { useDebounce } from "@/hooks/use-debounce";
 import { formatCurrency } from "@/components/CurrencyInput";
 import { SalesOrderDetailRow } from "@/components/sales/SalesOrderDetailRow";
+import { EntityLink } from "@/components/shared/EntityLink";
 
 // ─── Types ───────────────────────────────────────────────────────
 type SalesOrder = {
