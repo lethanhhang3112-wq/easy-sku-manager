@@ -200,6 +200,17 @@ const SuppliersPage = () => {
     enabled: !!detailSupplier,
   });
 
+  // Auto-open from URL param
+  useEffect(() => {
+    const supplierId = searchParams.get("supplierId");
+    if (supplierId && suppliers.length > 0) {
+      const found = suppliers.find((s) => s.id === supplierId);
+      if (found && detailSupplier?.id !== supplierId) {
+        setDetailSupplier(found);
+      }
+    }
+  }, [searchParams, suppliers, detailSupplier?.id]);
+
   // ─── Filter & Sort ──────────────────────────────────────
   const filtered = useMemo(() => {
     let result = suppliers;
