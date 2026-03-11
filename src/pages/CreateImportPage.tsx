@@ -136,7 +136,7 @@ const CreateImportPage = () => {
     if (cart.some((c) => c.product_id === product.id)) return;
     setCart((prev) => [...prev, {
       product_id: product.id, product_code: product.code, product_name: product.name,
-      quantity: 1, unit_cost: product.cost_price, item_discount: 0,
+      quantity: 1, unit_cost: product.cost_price, item_discount: 0, notes: "",
     }]);
   }, [cart]);
 
