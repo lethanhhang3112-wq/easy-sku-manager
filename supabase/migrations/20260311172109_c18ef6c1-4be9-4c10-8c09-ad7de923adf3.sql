@@ -1,0 +1,1 @@
+ALTER TABLE public.import_order_items ADD COLUMN IF NOT EXISTS notes TEXT;

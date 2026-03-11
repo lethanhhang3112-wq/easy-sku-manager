@@ -116,6 +116,7 @@ export type Database = {
         Row: {
           id: string
           import_order_id: string
+          notes: string | null
           product_id: string
           quantity: number
           total_cost: number | null
@@ -124,6 +125,7 @@ export type Database = {
         Insert: {
           id?: string
           import_order_id: string
+          notes?: string | null
           product_id: string
           quantity?: number
           total_cost?: number | null
@@ -132,6 +134,7 @@ export type Database = {
         Update: {
           id?: string
           import_order_id?: string
+          notes?: string | null
           product_id?: string
           quantity?: number
           total_cost?: number | null
