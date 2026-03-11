@@ -152,6 +152,10 @@ const CreateImportPage = () => {
     }));
   }, []);
 
+  const updateItemNote = useCallback((pid: string, note: string) => {
+    setCart((prev) => prev.map((c) => c.product_id === pid ? { ...c, notes: note } : c));
+  }, []);
+
   const removeFromCart = useCallback((pid: string) => {
     setCart((prev) => prev.filter((c) => c.product_id !== pid));
   }, []);
