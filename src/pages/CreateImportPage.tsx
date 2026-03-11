@@ -36,6 +36,7 @@ type CartItem = {
   quantity: number;
   unit_cost: number;
   item_discount: number;
+  notes: string;
 };
 
 const fmt = (n: number) => formatCurrency(n);
@@ -135,7 +136,7 @@ const CreateImportPage = () => {
     if (cart.some((c) => c.product_id === product.id)) return;
     setCart((prev) => [...prev, {
       product_id: product.id, product_code: product.code, product_name: product.name,
-      quantity: 1, unit_cost: product.cost_price, item_discount: 0,
+      quantity: 1, unit_cost: product.cost_price, item_discount: 0, notes: "",
     }]);
   }, [cart]);
 
@@ -149,6 +150,10 @@ const CreateImportPage = () => {
       const unitCost = c.quantity > 0 ? (newSubtotal + c.item_discount) / c.quantity : 0;
       return { ...c, unit_cost: Math.max(0, Math.round(unitCost * 100) / 100) };
     }));
+  }, []);
+
+  const updateItemNote = useCallback((pid: string, note: string) => {
+    setCart((prev) => prev.map((c) => c.product_id === pid ? { ...c, notes: note } : c));
   }, []);
 
   const removeFromCart = useCallback((pid: string) => {
@@ -180,7 +185,7 @@ const CreateImportPage = () => {
     refetchProducts();
     setCart((prev) => [...prev, {
       product_id: product.id, product_code: product.code, product_name: product.name,
-      quantity: 1, unit_cost: product.cost_price, item_discount: 0,
+      quantity: 1, unit_cost: product.cost_price, item_discount: 0, notes: "",
     }]);
   };
 
@@ -194,7 +199,7 @@ const CreateImportPage = () => {
         .select().single();
       if (orderError) throw orderError;
 
-      const items = cart.map((c) => ({ import_order_id: order.id, product_id: c.product_id, quantity: c.quantity, unit_cost: c.unit_cost }));
+      const items = cart.map((c) => ({ import_order_id: order.id, product_id: c.product_id, quantity: c.quantity, unit_cost: c.unit_cost, notes: c.notes.trim() || null }));
       const { error: itemsError } = await supabase.from("import_order_items").insert(items);
       if (itemsError) throw itemsError;
 
@@ -293,7 +298,16 @@ const CreateImportPage = () => {
                           </button>
                         </TableCell>
                         <TableCell className="font-mono text-xs text-primary">{item.product_code}</TableCell>
-                        <TableCell className="text-sm text-foreground">{item.product_name}</TableCell>
+                        <TableCell>
+                          <div className="text-sm text-foreground">{item.product_name}</div>
+                          <input
+                            type="text"
+                            value={item.notes}
+                            onChange={(e) => updateItemNote(item.product_id, e.target.value)}
+                            placeholder="Ghi chú (Số lô, HSD, IMEI...)"
+                            className="mt-1 h-6 w-full text-xs text-muted-foreground bg-transparent border-0 border-b border-transparent focus:border-border/60 outline-none placeholder:text-muted-foreground/50 px-0"
+                          />
+                        </TableCell>
                         <TableCell className="px-2">
                           <input
                             type="number"
