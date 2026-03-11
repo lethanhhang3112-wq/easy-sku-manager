@@ -298,7 +298,16 @@ const CreateImportPage = () => {
                           </button>
                         </TableCell>
                         <TableCell className="font-mono text-xs text-primary">{item.product_code}</TableCell>
-                        <TableCell className="text-sm text-foreground">{item.product_name}</TableCell>
+                        <TableCell>
+                          <div className="text-sm text-foreground">{item.product_name}</div>
+                          <input
+                            type="text"
+                            value={item.notes}
+                            onChange={(e) => updateItemNote(item.product_id, e.target.value)}
+                            placeholder="Ghi chú (Số lô, HSD, IMEI...)"
+                            className="mt-1 h-6 w-full text-xs text-muted-foreground bg-transparent border-0 border-b border-transparent focus:border-border/60 outline-none placeholder:text-muted-foreground/50 px-0"
+                          />
+                        </TableCell>
                         <TableCell className="px-2">
                           <input
                             type="number"
