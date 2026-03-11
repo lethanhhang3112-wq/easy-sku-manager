@@ -199,7 +199,7 @@ const CreateImportPage = () => {
         .select().single();
       if (orderError) throw orderError;
 
-      const items = cart.map((c) => ({ import_order_id: order.id, product_id: c.product_id, quantity: c.quantity, unit_cost: c.unit_cost }));
+      const items = cart.map((c) => ({ import_order_id: order.id, product_id: c.product_id, quantity: c.quantity, unit_cost: c.unit_cost, notes: c.notes.trim() || null }));
       const { error: itemsError } = await supabase.from("import_order_items").insert(items);
       if (itemsError) throw itemsError;
 
