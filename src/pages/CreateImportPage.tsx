@@ -36,6 +36,7 @@ type CartItem = {
   quantity: number;
   unit_cost: number;
   item_discount: number;
+  notes: string;
 };
 
 const fmt = (n: number) => formatCurrency(n);
