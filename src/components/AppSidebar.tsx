@@ -32,6 +32,7 @@ const items = [
   { title: "Nhóm sản phẩm", url: "/categories", icon: FolderTree },
   { title: "Nhà cung cấp", url: "/suppliers", icon: Truck },
   { title: "Khách hàng", url: "/customers", icon: Users },
+  { title: "Sổ quỹ", url: "/cashbook", icon: BookOpen },
   { title: "Báo cáo", url: "/reports", icon: BarChart3 },
   { title: "Cài đặt", url: "/settings", icon: Settings },
 ];
