@@ -36,7 +36,14 @@ interface AddProductModalProps {
 
 export const AddProductModal = ({ open, onOpenChange, onSuccess }: AddProductModalProps) => {
   const queryClient = useQueryClient();
+  const nameInputRef = useRef<HTMLInputElement>(null);
 
+  useEffect(() => {
+    if (open) {
+      const timer = setTimeout(() => nameInputRef.current?.focus(), 150);
+      return () => clearTimeout(timer);
+    }
+  }, [open]);
   const [code, setCode] = useState("");
   const [name, setName] = useState("");
   const [categoryId, setCategoryId] = useState("");
