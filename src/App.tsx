@@ -15,6 +15,7 @@ import SuppliersPage from "./pages/SuppliersPage";
 import CustomersPage from "./pages/CustomersPage";
 import ReportsPage from "./pages/ReportsPage";
 import SettingsPage from "./pages/SettingsPage";
+import CashbookPage from "./pages/CashbookPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
