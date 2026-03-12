@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -36,7 +36,14 @@ interface AddProductModalProps {
 
 export const AddProductModal = ({ open, onOpenChange, onSuccess }: AddProductModalProps) => {
   const queryClient = useQueryClient();
+  const nameInputRef = useRef<HTMLInputElement>(null);
 
+  useEffect(() => {
+    if (open) {
+      const timer = setTimeout(() => nameInputRef.current?.focus(), 150);
+      return () => clearTimeout(timer);
+    }
+  }, [open]);
   const [code, setCode] = useState("");
   const [name, setName] = useState("");
   const [categoryId, setCategoryId] = useState("");
@@ -158,6 +165,7 @@ export const AddProductModal = ({ open, onOpenChange, onSuccess }: AddProductMod
           <div>
             <Label>Tên sản phẩm *</Label>
             <Input
+              ref={nameInputRef}
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Nhập tên sản phẩm"
