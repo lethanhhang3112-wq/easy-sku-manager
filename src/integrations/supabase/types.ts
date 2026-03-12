@@ -217,6 +217,7 @@ export type Database = {
           created_at: string
           id: string
           import_order_id: string | null
+          is_checked: boolean | null
           notes: string | null
           payment_method: string
           reference_id: string | null
@@ -231,6 +232,7 @@ export type Database = {
           created_at?: string
           id?: string
           import_order_id?: string | null
+          is_checked?: boolean | null
           notes?: string | null
           payment_method?: string
           reference_id?: string | null
@@ -245,6 +247,7 @@ export type Database = {
           created_at?: string
           id?: string
           import_order_id?: string | null
+          is_checked?: boolean | null
           notes?: string | null
           payment_method?: string
           reference_id?: string | null

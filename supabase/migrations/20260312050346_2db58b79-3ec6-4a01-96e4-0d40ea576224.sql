@@ -1,0 +1,1 @@
+ALTER TABLE public.payment_slips ADD COLUMN IF NOT EXISTS is_checked BOOLEAN DEFAULT false;
