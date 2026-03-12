@@ -7,6 +7,7 @@ import {
   Truck,
   Users,
   BarChart3,
+  BookOpen,
   Settings,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
