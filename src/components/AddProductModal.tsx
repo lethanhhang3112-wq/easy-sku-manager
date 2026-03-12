@@ -165,6 +165,7 @@ export const AddProductModal = ({ open, onOpenChange, onSuccess }: AddProductMod
           <div>
             <Label>Tên sản phẩm *</Label>
             <Input
+              ref={nameInputRef}
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Nhập tên sản phẩm"
